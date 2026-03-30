@@ -22,6 +22,10 @@ export const casesRouter = router({
           triageCompletedAt: new Date(),
         });
 
+        if (!result?.insertId) {
+          throw new Error('Failed to create debt profile - no insert ID returned');
+        }
+
         await logCaseAccess(
           ctx.user.id,
           result.insertId,

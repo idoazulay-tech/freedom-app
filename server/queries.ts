@@ -1,5 +1,5 @@
 import { getDb } from './db';
-import { eq, and, desc } from 'drizzle-orm';
+import { eq, and, desc, sql } from 'drizzle-orm';
 import {
   debtProfiles,
   cases,
@@ -33,7 +33,8 @@ export async function createDebtProfile(
     ...data,
   });
 
-  return result;
+  // Drizzle MySQL returns { insertId: number }
+  return { insertId: (result as any).insertId };
 }
 
 /**
@@ -96,28 +97,54 @@ export async function getCaseById(caseId: number): Promise<any> {
 }
 
 /**
- * Get cases by debt profile ID
+ * Get cases by debt profile ID (with debt profile details)
  */
 export async function getCasesByDebtProfileId(debtProfileId: number): Promise<any[]> {
   const db = await getDb();
   if (!db) throw new Error('Database not available');
 
   return await db
-    .select()
+    .select({
+      id: cases.id,
+      debtProfileId: cases.debtProfileId,
+      professionalUserId: cases.professionalUserId,
+      status: cases.status,
+      matchingScore: cases.matchingScore,
+      createdAt: cases.createdAt,
+      updatedAt: cases.updatedAt,
+      totalDebtAmount: debtProfiles.totalDebtAmount,
+      debtType: debtProfiles.debtType,
+      severity: debtProfiles.severity,
+      persona: debtProfiles.persona,
+    })
     .from(cases)
+    .innerJoin(debtProfiles, eq(cases.debtProfileId, debtProfiles.id))
     .where(eq(cases.debtProfileId, debtProfileId));
 }
 
 /**
- * Get cases assigned to a professional
+ * Get cases assigned to a professional (with debt profile details)
  */
 export async function getCasesByProfessionalId(professionalUserId: number): Promise<any[]> {
   const db = await getDb();
   if (!db) throw new Error('Database not available');
 
   return await db
-    .select()
+    .select({
+      id: cases.id,
+      debtProfileId: cases.debtProfileId,
+      professionalUserId: cases.professionalUserId,
+      status: cases.status,
+      matchingScore: cases.matchingScore,
+      createdAt: cases.createdAt,
+      updatedAt: cases.updatedAt,
+      totalDebtAmount: debtProfiles.totalDebtAmount,
+      debtType: debtProfiles.debtType,
+      severity: debtProfiles.severity,
+      persona: debtProfiles.persona,
+    })
     .from(cases)
+    .innerJoin(debtProfiles, eq(cases.debtProfileId, debtProfiles.id))
     .where(eq(cases.professionalUserId, professionalUserId));
 }
 

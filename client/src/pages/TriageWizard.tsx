@@ -1,31 +1,53 @@
 import { useState } from 'react';
+import { useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { trpc } from '@/lib/trpc';
-import { useLocation } from 'wouter';
-import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { trpc } from '@/lib/trpc';
+import { CheckCircle2, ChevronRight, AlertCircle } from 'lucide-react';
+
+const DEBT_CATEGORIES = [
+  { value: 'credit_card', label: 'כרטיס אשראי', icon: '💳' },
+  { value: 'bank', label: 'הלוואה בנקאית', icon: '🏦' },
+  { value: 'personal_loan', label: 'הלוואה אישית', icon: '👤' },
+  { value: 'mortgage', label: 'משכנתא', icon: '🏠' },
+  { value: 'tax', label: 'חובות מס', icon: '📋' },
+  { value: 'other', label: 'אחר', icon: '📌' },
+];
+
+const SEVERITY_LEVELS = [
+  { value: 'low', label: 'נמוך - בשליטה', color: 'bg-green-500' },
+  { value: 'medium', label: 'בינוני - דורש תשומת לב', color: 'bg-yellow-500' },
+  { value: 'high', label: 'גבוה - דחוף', color: 'bg-orange-500' },
+  { value: 'critical', label: 'קריטי - סיכון מיידי', color: 'bg-red-500' },
+];
+
+interface FormData {
+  totalDebtAmount: string;
+  debtType: string;
+  collectionActions: string;
+  additionalContext: string;
+}
 
 export default function TriageWizard() {
   const [, setLocation] = useLocation();
-  const [step, setStep] = useState(1);
-  const [loading, setLoading] = useState(false);
-
-  const [formData, setFormData] = useState({
+  const [currentStep, setCurrentStep] = useState(1);
+  const [formData, setFormData] = useState<FormData>({
     totalDebtAmount: '',
     debtType: '',
-    monthlyIncome: '',
-    monthlyExpenses: '',
-    paymentHistory: '',
     collectionActions: '',
     additionalContext: '',
   });
+  const [loading, setLoading] = useState(false);
 
-  const createDebtProfile = trpc.cases.createDebtProfile.useMutation();
+  const createDebtProfile = trpc.cases.createDebtProfile.useMutation({
+    onError: (error) => {
+      console.error('[API Mutation Error]', error);
+    },
+  });
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({
@@ -35,199 +57,247 @@ export default function TriageWizard() {
   };
 
   const handleNext = () => {
-    if (step < 3) {
-      setStep(step + 1);
+    if (currentStep < 3) {
+      setCurrentStep(currentStep + 1);
     }
   };
 
-  const handlePrevious = () => {
-    if (step > 1) {
-      setStep(step - 1);
+  const handleBack = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
     }
   };
 
   const handleSubmit = async () => {
-    if (!formData.totalDebtAmount || !formData.debtType) {
-      toast.error('אנא מלא את כל השדות החובה');
-      return;
-    }
-
     setLoading(true);
     try {
-      // כאן נקרא ל-AI כדי לסווג את החוב
-      // לעת עתה נשתמש בערכים ברירת מחדל
+      if (!formData.totalDebtAmount || !formData.debtType) {
+        toast.error('אנא מלא את כל השדות הנדרשים');
+        setLoading(false);
+        return;
+      }
+
       const result = await createDebtProfile.mutateAsync({
-        totalDebtAmount: formData.totalDebtAmount,
-        debtType: formData.debtType as any,
-        severity: 'medium', // זה יבוא מה-AI בעתיד
-        persona: 'dana', // זה יבוא מה-AI בעתיד
+        totalDebtAmount: String(formData.totalDebtAmount),
+        debtType: formData.debtType as 'bank' | 'credit_card' | 'personal_loan' | 'mortgage' | 'tax' | 'other',
+        severity: 'medium' as const,
+        persona: 'dana' as const,
       });
+
+      if (!result) {
+        throw new Error('לא קיבלנו תגובה מהשרת');
+      }
 
       toast.success('הפרופיל שלך נוצר בהצלחה!');
       setLocation('/dashboard');
     } catch (error) {
       console.error('שגיאה:', error);
-      toast.error('שגיאה ביצירת הפרופיל');
+      toast.error('שגיאה ביצירת הפרופיל. אנא נסה שוב.');
     } finally {
       setLoading(false);
     }
   };
 
+  const progressPercentage = (currentStep / 3) * 100;
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 py-12">
-      <div className="container mx-auto px-4 max-w-2xl">
-        <Card className="bg-slate-800 border-slate-700">
-          <CardHeader>
-            <CardTitle className="text-white">אבחון החוב שלך</CardTitle>
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-4">
+      <div className="max-w-2xl mx-auto">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-white mb-2">אבחון החוב שלך</h1>
+          <p className="text-slate-300">
+            נשאל אותך כמה שאלות קצרות כדי להבין את מצב החוב שלך ולהתאים לך את הצעד הבא
+          </p>
+        </div>
+
+        {/* Progress Bar */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium text-slate-300">שלב {currentStep} מתוך 3</span>
+            <span className="text-sm text-slate-400">כ-2 דקות</span>
+          </div>
+          <div className="w-full bg-slate-700 rounded-full h-2">
+            <div
+              className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+              style={{ width: `${progressPercentage}%` }}
+            />
+          </div>
+        </div>
+
+        {/* Main Card */}
+        <Card className="bg-slate-800 border-slate-700 shadow-2xl">
+          <CardHeader className="pb-6">
+            <CardTitle className="text-white text-2xl">
+              {currentStep === 1 && 'סוג החוב'}
+              {currentStep === 2 && 'סכום החוב'}
+              {currentStep === 3 && 'מידע נוסף'}
+            </CardTitle>
             <CardDescription className="text-slate-400">
-              שלב {step} מתוך 3 - בואו נבין את מצב החוב שלך
+              {currentStep === 1 && 'בחר את סוג החוב הראשי שלך'}
+              {currentStep === 2 && 'ספר לנו כמה אתה חייב בערך'}
+              {currentStep === 3 && 'מידע נוסף שיעזור לנו להבין את המצב'}
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            {/* Step 1: Basic Information */}
-            {step === 1 && (
-              <div className="space-y-6">
+
+          <CardContent className="space-y-6">
+            {/* Step 1: Debt Type */}
+            {currentStep === 1 && (
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {DEBT_CATEGORIES.map((category) => (
+                    <button
+                      key={category.value}
+                      onClick={() => handleInputChange('debtType', category.value)}
+                      className={`p-4 rounded-lg border-2 transition-all text-left ${
+                        formData.debtType === category.value
+                          ? 'border-blue-500 bg-blue-500/10'
+                          : 'border-slate-600 bg-slate-700/50 hover:border-slate-500'
+                      }`}
+                    >
+                      <div className="text-2xl mb-2">{category.icon}</div>
+                      <div className="font-medium text-white">{category.label}</div>
+                    </button>
+                  ))}
+                </div>
+                <div className="bg-slate-700/50 border border-slate-600 rounded-lg p-3">
+                  <p className="text-sm text-slate-300">
+                    💡 <strong>עצה:</strong> בחר את סוג החוב הגדול ביותר או החשוב ביותר
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Step 2: Debt Amount */}
+            {currentStep === 2 && (
+              <div className="space-y-4">
                 <div>
-                  <Label className="text-white">סכום החוב הכולל (ש"ח)</Label>
+                  <label className="block text-sm font-medium text-white mb-2">
+                    סכום החוב הכולל (בש"ח)
+                  </label>
                   <Input
                     type="number"
                     placeholder="לדוגמה: 50000"
                     value={formData.totalDebtAmount}
                     onChange={(e) => handleInputChange('totalDebtAmount', e.target.value)}
-                    className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-500"
+                    className="bg-slate-700 border-slate-600 text-white placeholder-slate-400"
                   />
+                  <p className="text-xs text-slate-400 mt-2">
+                    זה עוזר לנו להבין את חומרת המצב ולהתאים לך את הפתרון הטוב ביותר
+                  </p>
                 </div>
 
-                <div>
-                  <Label className="text-white">סוג החוב</Label>
-                  <Select value={formData.debtType} onValueChange={(value) => handleInputChange('debtType', value)}>
-                    <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
-                      <SelectValue placeholder="בחר סוג חוב" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-slate-700 border-slate-600">
-                      <SelectItem value="bank">הלוואה בנקאית</SelectItem>
-                      <SelectItem value="credit_card">כרטיס אשראי</SelectItem>
-                      <SelectItem value="personal_loan">הלוואה אישית</SelectItem>
-                      <SelectItem value="mortgage">משכנתא</SelectItem>
-                      <SelectItem value="tax">חוב מס</SelectItem>
-                      <SelectItem value="other">אחר</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label className="text-white">הכנסה חודשית (ש"ח)</Label>
-                  <Input
-                    type="number"
-                    placeholder="לדוגמה: 10000"
-                    value={formData.monthlyIncome}
-                    onChange={(e) => handleInputChange('monthlyIncome', e.target.value)}
-                    className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-500"
-                  />
-                </div>
+                {formData.totalDebtAmount && (
+                  <div className="bg-slate-700/50 border border-slate-600 rounded-lg p-4">
+                    <div className="flex items-start gap-3">
+                      <AlertCircle className="w-5 h-5 text-yellow-500 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-sm font-medium text-white">סכום שהזנת: ₪{parseInt(formData.totalDebtAmount).toLocaleString('he-IL')}</p>
+                        <p className="text-xs text-slate-400 mt-1">
+                          אם זה לא נכון, אתה יכול לתקן זאת בכל עת
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
-            {/* Step 2: Financial Details */}
-            {step === 2 && (
-              <div className="space-y-6">
+            {/* Step 3: Additional Info */}
+            {currentStep === 3 && (
+              <div className="space-y-4">
                 <div>
-                  <Label className="text-white">הוצאות חודשיות (ש"ח)</Label>
-                  <Input
-                    type="number"
-                    placeholder="לדוגמה: 7000"
-                    value={formData.monthlyExpenses}
-                    onChange={(e) => handleInputChange('monthlyExpenses', e.target.value)}
-                    className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-500"
-                  />
-                </div>
-
-                <div>
-                  <Label className="text-white">היסטוריית תשלומים</Label>
+                  <label className="block text-sm font-medium text-white mb-2">
+                    האם יש הוצאה לפועל או הליך משפטי?
+                  </label>
                   <Textarea
-                    placeholder="תאר את היסטוריית התשלומים שלך (למשל: תשלומים בזמן, פיגורים וכו')"
-                    value={formData.paymentHistory}
-                    onChange={(e) => handleInputChange('paymentHistory', e.target.value)}
-                    className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-500"
-                    rows={4}
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* Step 3: Legal Status */}
-            {step === 3 && (
-              <div className="space-y-6">
-                <div>
-                  <Label className="text-white">פעולות גבייה או הליכים משפטיים</Label>
-                  <Textarea
-                    placeholder="תאר אם יש מכתבים משפטיים, הוצאה לפועל, או פעולות גבייה אחרות"
+                    placeholder="לדוגמה: יש לי מכתב מעו״ד, או יש עיקול על חשבון בנק"
                     value={formData.collectionActions}
                     onChange={(e) => handleInputChange('collectionActions', e.target.value)}
-                    className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-500"
-                    rows={4}
+                    className="bg-slate-700 border-slate-600 text-white placeholder-slate-400 min-h-24"
                   />
                 </div>
 
                 <div>
-                  <Label className="text-white">מידע נוסף</Label>
+                  <label className="block text-sm font-medium text-white mb-2">
+                    מידע נוסף שחשוב לנו לדעת
+                  </label>
                   <Textarea
-                    placeholder="כל מידע נוסף שחשוב לך שנדע"
+                    placeholder="לדוגמה: אני עצמאי, או אני בתהליך פשיטת רגל"
                     value={formData.additionalContext}
                     onChange={(e) => handleInputChange('additionalContext', e.target.value)}
-                    className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-500"
-                    rows={4}
+                    className="bg-slate-700 border-slate-600 text-white placeholder-slate-400 min-h-24"
                   />
+                </div>
+
+                <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
+                  <div className="flex items-start gap-3">
+                    <CheckCircle2 className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-sm font-medium text-blue-300">בסיום תקבל:</p>
+                      <ul className="text-xs text-blue-200 mt-2 space-y-1">
+                        <li>✓ סיכום מצב החוב שלך</li>
+                        <li>✓ המלצה על בעל מקצוע מתאים</li>
+                        <li>✓ תוכנית פעולה ראשונית</li>
+                      </ul>
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
 
-            {/* Navigation Buttons */}
-            <div className="flex gap-4 mt-8 justify-between">
+            {/* Action Buttons */}
+            <div className="flex gap-3 pt-6 border-t border-slate-700">
               <Button
                 variant="outline"
-                onClick={handlePrevious}
-                disabled={step === 1}
-                className="border-slate-600 text-white hover:bg-slate-700"
+                onClick={handleBack}
+                disabled={currentStep === 1 || loading}
+                className="flex-1 border-slate-600 text-slate-300 hover:bg-slate-700"
               >
                 חזור
               </Button>
 
-              {step < 3 ? (
-                <Button onClick={handleNext} className="bg-blue-600 hover:bg-blue-700">
-                  הבא
+              {currentStep < 3 ? (
+                <Button
+                  onClick={handleNext}
+                  disabled={
+                    (currentStep === 1 && !formData.debtType) ||
+                    (currentStep === 2 && !formData.totalDebtAmount) ||
+                    loading
+                  }
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  הבא <ChevronRight className="w-4 h-4 ml-2" />
                 </Button>
               ) : (
                 <Button
                   onClick={handleSubmit}
                   disabled={loading}
-                  className="bg-green-600 hover:bg-green-700"
+                  className="flex-1 bg-green-600 hover:bg-green-700 text-white"
                 >
-                  {loading ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      מעבדים...
-                    </>
-                  ) : (
-                    'סיים את האבחון'
-                  )}
+                  {loading ? 'מעבד...' : 'סיים אבחון'}
                 </Button>
               )}
             </div>
-
-            {/* Progress Indicator */}
-            <div className="flex gap-2 mt-8 justify-center">
-              {[1, 2, 3].map((s) => (
-                <div
-                  key={s}
-                  className={`w-3 h-3 rounded-full ${
-                    s <= step ? 'bg-blue-600' : 'bg-slate-600'
-                  }`}
-                />
-              ))}
-            </div>
           </CardContent>
         </Card>
+
+        {/* Step Indicators */}
+        <div className="flex justify-center gap-2 mt-8">
+          {[1, 2, 3].map((step) => (
+            <button
+              key={step}
+              onClick={() => step < currentStep && setCurrentStep(step)}
+              className={`w-3 h-3 rounded-full transition-all ${
+                step === currentStep
+                  ? 'bg-blue-500 w-8'
+                  : step < currentStep
+                  ? 'bg-green-500 cursor-pointer hover:bg-green-400'
+                  : 'bg-slate-600'
+              }`}
+            />
+          ))}
+        </div>
       </div>
     </div>
   );

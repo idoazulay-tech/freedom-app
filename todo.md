@@ -43,9 +43,9 @@
 - [ ] Build compliance checking AI agent
 
 ## Phase 5: Frontend - Personal Path Dashboard
-- [ ] Create landing page with authentication flow
-- [ ] Build triage wizard (questionnaire flow)
-- [ ] Implement case dashboard with status overview
+- [x] Create landing page with authentication flow
+- [x] Build triage wizard (questionnaire flow) - עם UI משופר
+- [x] Implement case dashboard with status overview - עם 6 כרטיסים
 - [ ] Create documents section with upload/download
 - [ ] Build tasks section with reminders
 - [ ] Implement notifications center
@@ -103,8 +103,29 @@
 - [ ] RBAC System
 - [ ] Encryption Layer
 
+## 🐛 בעיות שדורשות תיקון (מהמשתמש):
+- [x] תיקון שגיאות API (insertId undefined)
+- [x] תיקון JOIN בין cases ו-debtProfiles
+- [x] מילוי Dashboard בכרטיסי מצב אמיתיים
+- [x] הוספת כרטיס "מצב החוב שלי"
+- [x] הוספת כרטיס "מה לעשות עכשיו"
+- [x] הוספת כרטיס "בעלי מקצוע מחוברים"
+- [x] הוספת כרטיס "מסמכים חסרים"
+- [x] הוספת כרטיס "משימות קרובות"
+- [x] הוספת כרטיס "התקדמות כללית"
+- [ ] הוספת אפשרות להוסיף חובות מרובים (Multi-Debt Support)
+
+## 🎨 שיפורי UX/Design:
+- [x] חיזוק כותרת Triage עם הסבר ברור
+- [x] הוספת פס התקדמות (Progress Bar) בתוך Triage
+- [x] הוספת דוגמאות ו-Placeholder טובים יותר
+- [x] הוספת עזרה קטנה ליד כל שדה
+- [x] הוספת "תוצאה צפויה" בסוף Triage
+- [x] יותר רווח נשימה (Padding/Spacing)
+- [x] צבעים לפי משמעות (ירוק/צהוב/אדום/כחול)
+- [x] שפה רכה ומחזיקה (לא מאיימת)
+
 ## Known Issues & Blockers
-- None yet
 
 ## Notes
 - All timestamps stored as UTC Unix timestamps (milliseconds)
