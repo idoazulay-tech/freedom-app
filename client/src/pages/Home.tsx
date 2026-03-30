@@ -20,7 +20,7 @@ export default function Home() {
       {/* Navigation */}
       <nav className="border-b border-slate-700 bg-slate-900/50 backdrop-blur">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <div className="text-2xl font-bold text-white">🔓 Freedom</div>
+          <div className="text-2xl font-bold text-white ltr" dir="ltr">🔓 Freedom</div>
           <Button asChild>
             <a href={getLoginUrl()}>כניסה</a>
           </Button>

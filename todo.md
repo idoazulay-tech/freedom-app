@@ -133,3 +133,11 @@
 - All operations logged to audit_logs table
 - Compliance with Israeli Privacy Protection Law Amendment 13 (2024)
 - No personal data stored in logs, only operation types and outcomes
+
+
+## 🟢 בעיות RTL (עברית-אנגלית) - בעברית!
+- [x] הוספת dir="rtl" ל-HTML root
+- [x] תיקון CSS RTL - text-align, margin, padding
+- [x] תיקון FREEDOM positioning בכותרת
+- [ ] תיקון כל הקבצים - עברית-ראשי, אנגלית מוטבעת בתקשורת שלי
+- [ ] בדיקת כל הטקסטים בממשק
