@@ -210,21 +210,21 @@ class SDKServer {
       const { payload } = await jwtVerify(cookieValue, secretKey, {
         algorithms: ["HS256"],
       });
-      const { openId, appId, name } = payload as Record<string, unknown>;
+      const { openId, appId, name = '' } = payload as Record<string, unknown>;
 
       if (
         !isNonEmptyString(openId) ||
-        !isNonEmptyString(appId) ||
-        !isNonEmptyString(name)
+        !isNonEmptyString(appId)
       ) {
         console.warn("[Auth] Session payload missing required fields");
         return null;
       }
+      // name can be empty, that's okay
 
       return {
         openId,
         appId,
-        name,
+        name: typeof name === 'string' ? name : '',
       };
     } catch (error) {
       console.warn("[Auth] Session verification failed", String(error));

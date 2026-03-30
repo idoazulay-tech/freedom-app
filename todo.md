@@ -107,6 +107,7 @@
 - [x] תיקון שגיאות API (insertId undefined)
 - [x] תיקון JOIN בין cases ו-debtProfiles
 - [x] מילוי Dashboard בכרטיסי מצב אמיתיים
+- [x] תיקון מערכת ההתחברות כמו אטו ט
 - [x] הוספת כרטיס "מצב החוב שלי"
 - [x] הוספת כרטיס "מה לעשות עכשיו"
 - [x] הוספת כרטיס "בעלי מקצוע מחוברים"
@@ -145,5 +146,6 @@
 ## 🟢 בעיות OAuth - לולאה אינסופית של התחברות
 - [x] תיקון getLoginUrl - הוספת returnPath ב-state
 - [x] תיקון oauth.ts - קריאת returnPath מ-state
-- [x] כתיבת tests - 3 tests עברו בהצלחה
+- [x] תיקון session verification - הסרט דרישה ש-name יהיה ריק
+- [x] כתיבת tests - 10 tests עברו בהצלחה
 - [x] בדיקה - השרת רץ ללא שגיאות
