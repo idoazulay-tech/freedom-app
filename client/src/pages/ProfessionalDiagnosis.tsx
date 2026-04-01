@@ -123,15 +123,24 @@ export default function ProfessionalDiagnosis() {
             {/* Step 2: Debt Details */}
             {step === 2 && (
               <div className="space-y-4">
-                <p className="text-slate-300">הוסף פרטי החוב:</p>
+                <p className="text-slate-300">הקלד את סכום החוב:</p>
                 <div className="space-y-3">
                   <input
                     type="number"
-                    placeholder="סכום החוב (₪)"
-                    value={formData.totalAmount}
-                    onChange={(e) => setFormData({ ...formData, totalAmount: Number(e.target.value) })}
+                    placeholder="הקלד סכום"
+                    value={formData.totalAmount || ''}
+                    onChange={(e) => {
+                      const val = e.target.value === '' ? 0 : Number(e.target.value);
+                      setFormData({ ...formData, totalAmount: val });
+                    }}
                     className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400"
                   />
+                  {formData.totalAmount > 0 && (
+                    <div className="bg-blue-900/20 border border-blue-600 p-3 rounded-lg">
+                      <p className="text-blue-400 text-sm">סכום החוב:</p>
+                      <p className="text-2xl font-bold text-blue-300">₪{formData.totalAmount.toLocaleString('he-IL')}</p>
+                    </div>
+                  )}
                   <textarea
                     placeholder="הערה על החוב"
                     value={formData.diagnosisData.notes || ''}

@@ -17,10 +17,6 @@ import DebtTracker from './pages/DebtTracker';
 import DocumentScanner from './pages/DocumentScanner';
 import Lawyers from './pages/Lawyers';
 
-import PersonalProfile from './pages/PersonalProfile';
-import DebtTracking from './pages/DebtTracking';
-import PaymentPlans from './pages/PaymentPlans';
-
 function Router() {
   // make sure to consider if you need authentication for certain routes
   return (
@@ -36,10 +32,6 @@ function Router() {
       <Route path={"/tracker"} component={DebtTracker} />
       <Route path={"/scanner"} component={DocumentScanner} />
       <Route path={"/lawyers"} component={Lawyers} />
-
-      <Route path={"/personal-profile"} component={PersonalProfile} />
-      <Route path={"/debt-tracking"} component={DebtTracking} />
-      <Route path={"/payment-plan"} component={PaymentPlans} />
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />
