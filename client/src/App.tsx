@@ -16,12 +16,10 @@ import Calculator from './pages/Calculator';
 import DebtTracker from './pages/DebtTracker';
 import DocumentScanner from './pages/DocumentScanner';
 import Lawyers from './pages/Lawyers';
-import ProHub from './pages/ProHub';
-import ProHubClients from './pages/ProHubClients';
-import ProHubCases from './pages/ProHubCases';
-import ProHubTasks from './pages/ProHubTasks';
-import ProHubMessages from './pages/ProHubMessages';
-import ProHubAnalytics from './pages/ProHubAnalytics';
+
+import PersonalProfile from './pages/PersonalProfile';
+import DebtTracking from './pages/DebtTracking';
+import PaymentPlans from './pages/PaymentPlans';
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
@@ -38,12 +36,10 @@ function Router() {
       <Route path={"/tracker"} component={DebtTracker} />
       <Route path={"/scanner"} component={DocumentScanner} />
       <Route path={"/lawyers"} component={Lawyers} />
-      <Route path={"/pro-hub"} component={ProHub} />
-      <Route path={"/pro-hub/clients"} component={ProHubClients} />
-      <Route path={"/pro-hub/cases"} component={ProHubCases} />
-      <Route path={"/pro-hub/tasks"} component={ProHubTasks} />
-      <Route path={"/pro-hub/messages"} component={ProHubMessages} />
-      <Route path={"/pro-hub/analytics"} component={ProHubAnalytics} />
+
+      <Route path={"/personal-profile"} component={PersonalProfile} />
+      <Route path={"/debt-tracking"} component={DebtTracking} />
+      <Route path={"/payment-plan"} component={PaymentPlans} />
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />
