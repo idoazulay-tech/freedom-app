@@ -173,3 +173,25 @@ export const notifications = mysqlTable("notifications", {
 
 export type Notification = typeof notifications.$inferSelect;
 export type InsertNotification = typeof notifications.$inferInsert;
+
+// Diagnoses table
+export const diagnoses = mysqlTable("diagnoses", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  totalRiskScore: int("totalRiskScore").notNull(),
+  riskLevel: varchar("riskLevel", { length: 50 }).notNull(),
+  totalDebt: int("totalDebt").notNull(),
+  monthlyIncome: int("monthlyIncome").default(0),
+  monthlyExpenses: int("monthlyExpenses").default(0),
+  availableForDebt: int("availableForDebt").default(0),
+  creditorCount: int("creditorCount").default(0),
+  hasEnforcement: boolean("hasEnforcement").default(false),
+  hasWarningLetters: boolean("hasWarningLetters").default(false),
+  debtsData: text("debtsData"),
+  actionsData: text("actionsData"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow(),
+});
+
+export type Diagnosis = typeof diagnoses.$inferSelect;
+export type InsertDiagnosis = typeof diagnoses.$inferInsert;

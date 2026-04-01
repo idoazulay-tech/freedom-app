@@ -6,6 +6,7 @@ import { casesRouter } from "./routers/cases";
 import { documentsRouter } from "./routers/documents";
 import { tasksRouter } from "./routers/tasks";
 import { consentRouter } from "./routers/consent";
+import { diagnosisRouter } from "./routers/diagnosis";
 
 export const appRouter = router({
   system: systemRouter,
@@ -25,6 +26,7 @@ export const appRouter = router({
   documents: documentsRouter,
   tasks: tasksRouter,
   consent: consentRouter,
+  diagnosis: diagnosisRouter,
 });
 
 export type AppRouter = typeof appRouter;

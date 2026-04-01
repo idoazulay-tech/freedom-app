@@ -15,6 +15,13 @@
       "when": 1774887718829,
       "tag": "0001_faulty_centennial",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1775058375168,
+      "tag": "0002_lonely_justin_hammer",
+      "breakpoints": true
     }
   ]
 }
