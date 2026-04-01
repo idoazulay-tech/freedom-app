@@ -9,21 +9,21 @@ export default function Home() {
   const { user, isAuthenticated } = useAuth();
   const [, setLocation] = useLocation();
 
-  if (isAuthenticated && user) {
-    // הפנה משתמשים מחובرים לדשבורד
-    setLocation('/dashboard');
-    return null;
-  }
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       {/* Navigation */}
       <nav className="border-b border-slate-700 bg-slate-900/50 backdrop-blur">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div className="text-2xl font-bold text-white ltr" dir="ltr">🔓 Freedom</div>
-          <Button asChild>
-            <a href={getLoginUrl()}>כניסה</a>
-          </Button>
+          {isAuthenticated && user ? (
+            <Button asChild>
+              <a href="/dashboard">לדשבורד שלי</a>
+            </Button>
+          ) : (
+            <Button asChild>
+              <a href={getLoginUrl()}>כניסה עם גוגל</a>
+            </Button>
+          )}
         </div>
       </nav>
 
@@ -37,12 +37,25 @@ export default function Home() {
             Freedom היא פלטפורמה שמסייעת לאנשים בחוב להבין איפה הם עומדים, מה הצעד הבא, ואיך להגיע לעזרה הנכונה — בצורה ברורה, מהירה ובלי בלבול.
           </p>
           <div className="flex gap-4 justify-center">
-            <Button asChild size="lg" className="bg-blue-600 hover:bg-blue-700">
-              <a href={getLoginUrl()}>התחל עכשיו</a>
-            </Button>
-            <Button asChild variant="outline" size="lg" className="border-slate-600 text-white hover:bg-slate-800">
-              <a href="#features">למד עוד</a>
-            </Button>
+            {isAuthenticated && user ? (
+              <>
+                <Button asChild size="lg" className="bg-blue-600 hover:bg-blue-700">
+                  <a href="/diagnosis-professional">התחל אבחון חדש</a>
+                </Button>
+                <Button asChild variant="outline" size="lg" className="border-slate-600 text-white hover:bg-slate-800">
+                  <a href="/dashboard">לדשבורד שלי</a>
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button asChild size="lg" className="bg-blue-600 hover:bg-blue-700">
+                  <a href={getLoginUrl()}>התחל אבחון</a>
+                </Button>
+                <Button asChild variant="outline" size="lg" className="border-slate-600 text-white hover:bg-slate-800">
+                  <a href="#features">למד עוד</a>
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </section>

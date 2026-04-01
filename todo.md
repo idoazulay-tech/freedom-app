@@ -136,7 +136,7 @@
 - [x] צבעים לפי משמעות (ירוק/צהוב/אדום/כחול)
 - [x] שפה רכה ומחזיקה (לא מאיימת)
 
-## ✅ **סטטוס סופי - Phase 5 Complete:**
+## ✅ **סטטוס סופי - Phase 5 Complete + Bug Fixes:**
 - ✅ 26 Tests Passing
 - ✅ 0 TypeScript Errors
 - ✅ Professional Diagnosis Wizard (4 steps)
@@ -146,7 +146,17 @@
 - ✅ Hebrew RTL Support
 - ✅ Database Schema Complete
 - ✅ OAuth Flow Fixed
-- ✅ Build: 5.73s
+- ✅ diagnoses Table Created in Database
+- ✅ Home Page Redirect Loop Fixed
+- ✅ Landing Page Shows Correctly
+- ✅ Build: 4.52s
+
+## Bug Fixes Completed
+- [x] תיקון שגיאות diagnoses table - יצירת הטבלה בבסיס הנתונים
+- [x] תיקון Home page redirect loop - דף הנחיתה לא מתחלף יותר
+- [x] הוספת conditional buttons - כפתורים שונים לפי authentication state
+- [x] הרצת SQL migration דרך Node.js script
+- [x] בדיקה שכל ה-tests עברו
 
 ## Known Issues & Blockers
 
@@ -156,6 +166,10 @@
 - All operations logged to audit_logs table
 - Compliance with Israeli Privacy Protection Law Amendment 13 (2024)
 - No personal data stored in logs, only operation types and outcomes
+- diagnoses table created with 15 columns and userId index
+- Home page redirect loop fixed - now shows landing page for all users
+- Conditional buttons based on authentication state
+- Migration script (run-migration.mjs) created for future database updates
 
 
 ## 🟢 בעיות RTL (עברית-אנגלית) - בעברית!
