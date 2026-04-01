@@ -2,7 +2,7 @@ import { useAuth } from '@/_core/hooks/useAuth';
 import DashboardLayout from '@/components/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plus, FileText, CheckSquare, Users, TrendingDown, AlertCircle, ChevronRight } from 'lucide-react';
+import { Plus, FileText, CheckSquare, Users, TrendingDown, AlertCircle, ChevronRight, Mail, Calculator, BarChart3, Scan, Scale } from 'lucide-react';
 import { trpc } from '@/lib/trpc';
 import { useLocation } from 'wouter';
 import { useState } from 'react';
@@ -43,11 +43,11 @@ export default function Dashboard() {
                   בואו נתחיל בסיווג החוב שלך כדי לקבל תוכנית פעולה מותאמת אישית
                 </p>
                 <Button
-                  onClick={() => setLocation('/triage')}
+                  onClick={() => setLocation('/diagnosis-professional')}
                   className="bg-blue-600 hover:bg-blue-700"
                 >
                   <Plus className="w-4 h-4 ml-2" />
-                  התחל אבחון
+                  התחל אבחון מקצועי
                 </Button>
               </div>
             </CardContent>
@@ -87,7 +87,7 @@ export default function Dashboard() {
             </div>
             <Button
               size="sm"
-              onClick={() => setLocation('/triage')}
+              onClick={() => setLocation('/diagnosis-professional')}
               className="ml-auto bg-green-600 hover:bg-green-700"
             >
               <Plus className="w-4 h-4 ml-2" />
@@ -142,129 +142,113 @@ export default function Dashboard() {
               </CardContent>
             </Card>
 
-            {/* Card 2: Next Steps */}
-            <Card className="bg-slate-800 border-slate-700 hover:border-slate-600 transition-colors">
+            {/* Card 2: Letters Generator */}
+            <Card className="bg-slate-800 border-slate-700 hover:border-slate-600 transition-colors cursor-pointer" onClick={() => setLocation('/letters')}>
               <CardHeader className="pb-3">
                 <CardTitle className="text-white flex items-center gap-2 text-lg">
-                  <CheckSquare className="w-5 h-5 text-blue-400" />
-                  מה לעשות עכשיו
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="space-y-2">
-                  <div className="flex items-start gap-3 p-2 bg-slate-700/50 rounded">
-                    <div className="w-5 h-5 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0 text-white text-xs font-bold">1</div>
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium text-white">העלה מסמכים</p>
-                      <p className="text-xs text-slate-400">חוזים, מכתבים</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3 p-2 bg-slate-700/30 rounded">
-                    <div className="w-5 h-5 rounded-full bg-slate-600 flex items-center justify-center flex-shrink-0 text-white text-xs font-bold">2</div>
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium text-slate-300">בחר בעל מקצוע</p>
-                      <p className="text-xs text-slate-500">עו"ד או יועץ</p>
-                    </div>
-                  </div>
-                </div>
-                <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white text-sm">
-                  התחל עכשיו <ChevronRight className="w-4 h-4 ml-2" />
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Card 3: Professional */}
-            <Card className="bg-slate-800 border-slate-700 hover:border-slate-600 transition-colors">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-white flex items-center gap-2 text-lg">
-                  <Users className="w-5 h-5 text-purple-400" />
-                  בעל מקצוע
+                  <Mail className="w-5 h-5 text-blue-400" />
+                  מחולל מכתבים
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="bg-slate-700/50 rounded-lg p-4 text-center">
-                  <p className="text-sm text-slate-400">עדיין לא בחרת בעל מקצוע</p>
-                  <p className="text-xs text-slate-500 mt-1">זה יעזור לך להתקדם בפתרון החוב</p>
+                  <p className="text-sm text-slate-300">צור מכתבי דרישה ותשובות</p>
+                  <p className="text-xs text-slate-500 mt-1">לנושים ובנקים</p>
                 </div>
                 <Button 
-                  variant="outline" 
-                  className="w-full border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-white"
-                  onClick={() => setLocation('/professionals')}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                  onClick={() => setLocation('/letters')}
                 >
-                  חפש בעל מקצוע
+                  פתח מחולל <ChevronRight className="w-4 h-4 ml-2" />
                 </Button>
               </CardContent>
             </Card>
 
-            {/* Card 4: Documents */}
-            <Card className="bg-slate-800 border-slate-700 hover:border-slate-600 transition-colors">
+            {/* Card 3: Debt Calculator */}
+            <Card className="bg-slate-800 border-slate-700 hover:border-slate-600 transition-colors cursor-pointer" onClick={() => setLocation('/calculator')}>
               <CardHeader className="pb-3">
                 <CardTitle className="text-white flex items-center gap-2 text-lg">
-                  <FileText className="w-5 h-5 text-green-400" />
-                  מסמכים
+                  <Calculator className="w-5 h-5 text-green-400" />
+                  מחשבון חוב
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="bg-slate-700/50 rounded-lg p-4 text-center">
-                  <p className="text-2xl font-bold text-white">0</p>
-                  <p className="text-xs text-slate-400 mt-1">מסמכים מוצפנים</p>
+                  <p className="text-sm text-slate-300">חשב התחייבויות חודשיות</p>
+                  <p className="text-xs text-slate-500 mt-1">וריביות</p>
                 </div>
                 <Button 
-                  variant="outline" 
-                  className="w-full border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-white"
-                  onClick={() => setLocation('/documents')}
+                  className="w-full bg-green-600 hover:bg-green-700 text-white"
+                  onClick={() => setLocation('/calculator')}
                 >
-                  העלה מסמך
+                  חשב עכשיו <ChevronRight className="w-4 h-4 ml-2" />
                 </Button>
               </CardContent>
             </Card>
 
-            {/* Card 5: Tasks */}
-            <Card className="bg-slate-800 border-slate-700 hover:border-slate-600 transition-colors">
+            {/* Card 4: Debt Tracker */}
+            <Card className="bg-slate-800 border-slate-700 hover:border-slate-600 transition-colors cursor-pointer" onClick={() => setLocation('/tracker')}>
               <CardHeader className="pb-3">
                 <CardTitle className="text-white flex items-center gap-2 text-lg">
-                  <CheckSquare className="w-5 h-5 text-orange-400" />
-                  משימות
+                  <BarChart3 className="w-5 h-5 text-purple-400" />
+                  עקבות חוב
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="bg-slate-700/50 rounded-lg p-4 text-center">
-                  <p className="text-2xl font-bold text-white">0</p>
-                  <p className="text-xs text-slate-400 mt-1">משימות פעילות</p>
+                  <p className="text-sm text-slate-300">עקוב אחר התקדמות</p>
+                  <p className="text-xs text-slate-500 mt-1">והשלם חובות</p>
                 </div>
-                <div className="text-xs text-slate-400 text-center p-2 bg-slate-700/30 rounded">
-                  משימות יופיעו כשתחבר בעל מקצוע
-                </div>
+                <Button 
+                  className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+                  onClick={() => setLocation('/tracker')}
+                >
+                  עקוב <ChevronRight className="w-4 h-4 ml-2" />
+                </Button>
               </CardContent>
             </Card>
 
-            {/* Card 6: Progress */}
-            <Card className="bg-slate-800 border-slate-700 hover:border-slate-600 transition-colors">
+            {/* Card 5: Document Scanner */}
+            <Card className="bg-slate-800 border-slate-700 hover:border-slate-600 transition-colors cursor-pointer" onClick={() => setLocation('/scanner')}>
               <CardHeader className="pb-3">
                 <CardTitle className="text-white flex items-center gap-2 text-lg">
-                  <TrendingDown className="w-5 h-5 text-indigo-400" />
-                  התקדמות
+                  <Scan className="w-5 h-5 text-orange-400" />
+                  סריקת מסמכים
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-green-500" />
-                    <span className="text-xs text-white">✓ אבחון הושלם</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-slate-600" />
-                    <span className="text-xs text-slate-400">בחירת מומחה</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-slate-600" />
-                    <span className="text-xs text-slate-400">תוכנית פעולה</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-slate-600" />
-                    <span className="text-xs text-slate-400">סיום</span>
-                  </div>
+                <div className="bg-slate-700/50 rounded-lg p-4 text-center">
+                  <p className="text-sm text-slate-300">סרוק מסמכים עם OCR</p>
+                  <p className="text-xs text-slate-500 mt-1">חילוץ נתונים אוטומטי</p>
                 </div>
+                <Button 
+                  className="w-full bg-orange-600 hover:bg-orange-700 text-white"
+                  onClick={() => setLocation('/scanner')}
+                >
+                  סרוק <ChevronRight className="w-4 h-4 ml-2" />
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Card 6: Lawyers & Advisors */}
+            <Card className="bg-slate-800 border-slate-700 hover:border-slate-600 transition-colors cursor-pointer" onClick={() => setLocation('/lawyers')}>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-white flex items-center gap-2 text-lg">
+                  <Scale className="w-5 h-5 text-indigo-400" />
+                  עורכי דין
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="bg-slate-700/50 rounded-lg p-4 text-center">
+                  <p className="text-sm text-slate-300">מצא עורך דין או יועץ</p>
+                  <p className="text-xs text-slate-500 mt-1">מומחה בחובות</p>
+                </div>
+                <Button 
+                  className="w-full bg-indigo-600 hover:bg-indigo-700 text-white"
+                  onClick={() => setLocation('/lawyers')}
+                >
+                  חפש <ChevronRight className="w-4 h-4 ml-2" />
+                </Button>
               </CardContent>
             </Card>
           </div>
