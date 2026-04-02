@@ -9,6 +9,7 @@ import Home from "./pages/Home";
 import Dashboard from './pages/Dashboard';
 import TriageWizard from './pages/TriageWizard';
 import ProfessionalDiagnosis from './pages/ProfessionalDiagnosis';
+import MultiDebtDiagnosis from './pages/MultiDebtDiagnosis';
 import Diagnosis from './pages/Diagnosis';
 import Profile from './pages/Profile';
 import Letters from './pages/Letters';
@@ -25,7 +26,8 @@ function Router() {
       <Route path={"/"} component={Home} />
       <Route path={"/dashboard"} component={Dashboard} />
       <Route path={"/triage"} component={TriageWizard} />
-      <Route path={"/diagnosis-professional"} component={ProfessionalDiagnosis} />
+       <Route path="/diagnosis-professional" component={ProfessionalDiagnosis} />
+      <Route path="/diagnosis-multi-debt" component={MultiDebtDiagnosis} />
       <Route path={"/diagnosis"} component={Diagnosis} />
       <Route path={"/profile"} component={Profile} />
       <Route path={"/letters"} component={Letters} />
