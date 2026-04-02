@@ -139,3 +139,11 @@
 - [x] בנייה של Profile page להצגת הנתונים
 - [x] בדיקה שהנתונים משמרים ומוצגים כמו שצריך
 - [x] עדכון todo.md
+
+## ✅ Checkpoint 3: Database Migration & Tests Fixed
+- [x] תיקון בעיית ה-migrations
+- [x] יצירת טבלת diagnoses בבסיס הנתונים
+- [x] כתיבת tests לבדיקת השמירה
+- [x] כל ה-tests עברו בהצלחה
+- [x] בדיקה שהשרת עובד ללא שגיאות
+- [x] עדכון todo.md
