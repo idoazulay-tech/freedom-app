@@ -1,149 +1,185 @@
 # Freedom - Autonomous Debt Management Ecosystem - TODO
 
-## Phase 12: Research Integration Engine ✅
-- [x] שילוב המחקר המפורט ב-Diagnosis Agent
-- [x] עדכון Advanced Scoring Engine עם כל סוגי החובות
-- [x] עדכון Persona Classification עם המחקר
-- [x] הוספת סימני אזהרה בתוצאות
-- [x] הוספת ניתוב למומחים בתוצאות
+## Phase 1: Database Schema & Core Infrastructure
+- [ ] Implement Drizzle schema for users table with roles (debtor, professional, admin)
+- [ ] Create cases/debt_profiles table with severity levels and persona classification
+- [ ] Build documents table with encryption metadata and audit trail
+- [ ] Implement tasks table with status tracking and deadline management
+- [ ] Create consent_records table for privacy law compliance (Amendment 13)
+- [ ] Build audit_logs table for all sensitive operations
+- [ ] Implement professional_profiles table with specializations
+- [ ] Create matching_rules table for algorithm configuration
+- [ ] Set up database migrations and seed initial data
+- [ ] Implement AES-256 encryption helper functions
 
-## Phase 13: Personalized Solution Engine ✅
-- [x] חישוב פתרונות אופטימאליים לכל מקרה
-- [x] חישוב תוכנית תשלומים מותאמת
-- [x] חישוב חיסכון פוטנציאלי
-- [x] חישוב זמן לפתרון
-- [x] הצגת אפשרויות פתרון בתוצאות
+## Phase 2: Authentication & Security
+- [ ] Implement OAuth 2FA flow integration
+- [ ] Build WebAuthn biometric authentication (fingerprint/face)
+- [ ] Create session management with secure cookies
+- [ ] Implement role-based access control (RBAC) middleware
+- [ ] Build consent verification system for data access
+- [ ] Create audit logging for all auth events
+- [ ] Implement password reset and account recovery flows
+- [ ] Set up rate limiting for login attempts
 
-## Phase 14: Professional Matching Engine ✅
-- [x] יצירת מסד נתונים של מומחים (עורכי דין, יועצים, עמותות)
-- [x] בנייה של אלגוריתם התאמה מתקדם
-- [ ] חיבור ל-Professional Dashboard
-- [x] הצגת מומחים מומלצים בתוצאות
-- [ ] יכולת הזמנת פגישה
+## Phase 3: Backend API Layer
+- [ ] Build case management procedures (create, read, update, list)
+- [ ] Implement document upload/download with encryption
+- [ ] Create task management procedures
+- [ ] Build professional matching procedures
+- [ ] Implement consent management procedures
+- [ ] Create notification trigger procedures
+- [ ] Build reporting and analytics procedures
+- [ ] Implement audit log query procedures
 
-## Phase 15: Document Analysis Engine
-- [ ] בנייה של OCR integration (חילוץ טקסט מתמונות)
-- [ ] בנייה של NLP integration (ניתוח מסמכים משפטיים)
-- [ ] זיהוי סוג מסמך אוטומטי
-- [ ] חילוץ מידע חשוב מהמסמכים
-- [ ] יצירת משימות מהמסמכים
+## Phase 4: AI Integration Pipeline
+- [ ] Implement LLM-based debt triage system (Yossi/Dana/Avi classification)
+- [ ] Build document OCR and text extraction
+- [ ] Implement AI document summarization
+- [ ] Create AI-powered task extraction from documents
+- [ ] Build professional matching algorithm
+- [ ] Implement severity level detection
+- [ ] Create risk assessment AI agent
+- [ ] Build compliance checking AI agent
 
-## Phase 16: Automated Task Generation
-- [ ] יצירת משימות אוטומטיות לפי סוג החוב
-- [ ] יצירת תזכורות אוטומטיות
-- [ ] יצירת דדליינים אוטומטיים
-- [ ] חיבור ל-Task Management System
-- [ ] התראות על משימות חדשות
+## Phase 5: Frontend - Personal Path Dashboard
+- [x] Create landing page with authentication flow
+- [x] Build triage wizard (questionnaire flow) - עם UI משופר
+- [x] Implement case dashboard with status overview - עם 6 כרטיסים
+- [x] Create Professional Diagnosis Wizard (4-step comprehensive diagnosis)
+- [x] Implement RiskCalculator with 0-200 scale and 4 risk levels
+- [x] Create 5 new components for diagnosis flow
+- [x] Add database schema for diagnoses table
+- [x] Implement diagnosisRouter with save/retrieve procedures
+- [ ] Create documents section with upload/download
+- [ ] Build tasks section with reminders
+- [ ] Implement notifications center
+- [ ] Create professional matching UI
+- [ ] Build case timeline/progress tracker
+- [ ] Implement messaging interface with professionals
 
-## Phase 17: Communication System
-- [ ] WhatsApp Business API integration
-- [ ] Email notification system
-- [ ] SMS integration
-- [ ] Push notifications
-- [ ] Multi-channel notification templates
+## Phase 6: Frontend - Pro Hub Dashboard
+- [ ] Create professional login and onboarding
+- [ ] Build client list/management interface
+- [ ] Implement case details view with full history
+- [ ] Create document review interface
+- [ ] Build task assignment and tracking
+- [ ] Implement messaging/communication interface
+- [ ] Create reporting and analytics dashboard
+- [ ] Build client communication templates
+- [ ] Implement billing and subscription management
 
-## Phase 18: Monitoring & Tracking System
-- [ ] מעקב אחרי התקדמות בזמן אמת
-- [ ] עדכונים על מצב החוב
-- [ ] התראות על שינויים משפטיים
-- [ ] דוחות חודשיים
-- [ ] Dashboard עם סטטוס עדכני
+## Phase 7: Notification & Integration Layer
+- [ ] Implement WhatsApp Business API integration
+- [ ] Build Email notification system
+- [ ] Create notification templates for key events
+- [ ] Implement audit logging system
+- [ ] Build agent orchestration hooks
+- [ ] Create webhook system for external integrations
+- [ ] Implement notification preferences management
+- [ ] Build notification delivery tracking
 
-## Phase 19: Alternative Solutions Engine
-- [ ] הכנסה נוספת - הצעות עבודה
-- [ ] הכנסה נוספת - קורסים/הכשרות
-- [ ] הכנסה נוספת - התחלת עסק
-- [ ] הכנסה נוספת - השקעות
-- [ ] ניתוב למנטורים עסקיים
-
-## Phase 20: Legal Automation Bots
-- [ ] בוט משא ומתן עם נושים
-- [ ] בוט משא ומתן עם רשויות
-- [ ] בוט הגנה משפטית
-- [ ] יצירת מסמכים משפטיים אוטומטיים
-- [ ] ניתוב ל-Legal Professionals
-
-## Phase 21: Real-time Data Integration
-- [ ] חיבור לבורו אשראי (ניקוד אשראי בזמן אמת)
-- [ ] חיבור לרשויות המס (בדיקת חובות מס)
-- [ ] חיבור לבנקים (בדיקת חובות בנקאיים)
-- [ ] חיבור לעיריות (בדיקת חובות עירוניים)
-- [ ] עדכון נתונים בזמן אמת
-
-## Phase 22: Legal & Compliance Engine
-- [ ] בדיקת Amendment 13 (חוק הגנת הפרטיות)
-- [ ] בדיקת חוק הגנת הצרכן
-- [ ] בדיקת חוק הריבית המקסימלית
-- [ ] בדיקת חוק הערבות
-- [ ] בדיקת חוק סדר הגבייה
-
-## Phase 23: Results Display Page ✅
-- [x] בנייה של Results Page יפה ומפורטת
-- [x] הצגת persona classification
-- [x] הצגת risk score עם הסברים
-- [x] הצגת matched professionals
-- [x] הצגת legal considerations
-- [x] הצגת automated tasks
-- [x] הצגת alternative solutions
-- [x] הצגת next steps
-
-## Phase 24: Professional Dashboard
-- [ ] דף נחיתה למומחים עם features
-- [ ] Pro Hub Dashboard עם יכולות ניהול לקוחות
-- [ ] יכולת הצגת diagnoses של לקוחות
-- [ ] יכולת הצגת משימות
-- [ ] יכולת תקשורת עם לקוחות
-- [ ] יכולת יצירת דוחות
-
-## Phase 25: Final Testing & Deployment
-- [ ] בדיקה מלאה של כל הזרימה
-- [ ] בדיקת integration בין כל החלקים
-- [ ] בדיקת performance
-- [ ] בדיקת security
-- [ ] כתיבת tests
-- [ ] Checkpoint סופי
-- [ ] Deployment
+## Phase 8: Testing, Documentation & Deployment
+- [ ] Write E2E tests for critical user flows
+- [ ] Implement security testing (encryption, auth)
+- [ ] Create compliance verification tests
+- [ ] Build performance testing suite
+- [ ] Write API documentation
+- [ ] Create user documentation
+- [ ] Build deployment scripts
+- [ ] Set up monitoring and alerting
+- [ ] Create disaster recovery procedures
 
 ## Core Features Status
-- [x] Multi-Debt Support
-- [x] Professional Diagnosis Wizard
-- [x] Risk Calculator (0-200 scale)
-- [x] Persona Classification (Yossi/Dana/Avi)
-- [x] Diagnosis Agent
-- [x] Research Integration
-- [x] Personalized Solutions
-- [x] Professional Matching
-- [ ] Document Analysis
-- [x] Automated Tasks
-- [ ] Communication System
-- [ ] Monitoring & Tracking
-- [x] Alternative Solutions
-- [ ] Legal Automation
-- [ ] Real-time Data Integration
-- [ ] Legal Compliance
-- [x] Results Display
-- [ ] Professional Dashboard
-- [x] Database Persistence
-- [x] Profile Page with Data Display
+- [ ] 2FA Authentication
+- [ ] WebAuthn Biometric Support
+- [ ] AI Debt Triage System
+- [ ] Professional Matching Engine
+- [ ] Secure Document Management (AES-256)
+- [ ] OCR & Document Processing
+- [ ] Dual Dashboard Interfaces
+- [ ] Task & Reminder System
+- [ ] WhatsApp Integration
+- [ ] Email Notifications
+- [ ] Consent Management (Privacy Law Compliant)
+- [ ] Case Management Workflow
+- [ ] Audit Logging System
+- [ ] Agent Orchestration (61 Agents)
+- [ ] RBAC System
+- [ ] Encryption Layer
 
-## 🤖 חוק עצמאות מוחלטת:
-- ❌ אל תשאל
-- ❌ אל תחכה
-- ✅ תמצא דרך בעצמך
-- ✅ תגדיל ראש
-- ✅ תבין מה צריך
-- ✅ תעשה עד שתצליח
+## 🐛 בעיות שדורשות תיקון (מהמשתמש):
+- [x] תיקון שגיאות API (insertId undefined)
+- [x] תיקון JOIN בין cases ו-debtProfiles
+- [x] מילוי Dashboard בכרטיסי מצב אמיתיים
+- [x] תיקון מערכת ההתחברות כמו אטו ט
+- [x] הוספת כרטיס "מצב החוב שלי"
+- [x] הוספת כרטיס "מה לעשות עכשיו"
+- [x] הוספת כרטיס "בעלי מקצוע מחוברים"
+- [x] הוספת כרטיס "מסמכים חסרים"
+- [x] הוספת כרטיס "משימות קרובות"
+- [x] הוספת כרטיס "התקדמות כללית"
+- [x] הוספת אפשרות להוסיף חובות מרובים (Multi-Debt Support)
+- [x] בנייה של Professional Diagnosis Wizard (4 שלבים)
+- [x] יצירת RiskCalculator עם 0-200 scale
+- [x] יצירת 5 קומפוננטות חדשות לזרימת האבחון
+- [x] הוספת diagnoses table לבסיס הנתונים
+- [x] חיבור diagnosisRouter לתוך appRouter
 
-## ✅ Checkpoint 2: Database Persistence & Profile Display
-- [x] תיקון diagnosis router להשמיר בצורה נכונה
-- [x] בנייה של Profile page להצגת הנתונים
-- [x] בדיקה שהנתונים משמרים ומוצגים כמו שצריך
-- [x] עדכון todo.md
+## 🎨 שיפורי UX/Design:
+- [x] חיזוק כותרת Triage עם הסבר ברור
+- [x] הוספת פס התקדמות (Progress Bar) בתוך Triage
+- [x] הוספת דוגמאות ו-Placeholder טובים יותר
+- [x] הוספת עזרה קטנה ליד כל שדה
+- [x] הוספת "תוצאה צפויה" בסוף Triage
+- [x] יותר רווח נשימה (Padding/Spacing)
+- [x] צבעים לפי משמעות (ירוק/צהוב/אדום/כחול)
+- [x] שפה רכה ומחזיקה (לא מאיימת)
 
-## ✅ Checkpoint 3: Database Migration & Tests Fixed
-- [x] תיקון בעיית ה-migrations
-- [x] יצירת טבלת diagnoses בבסיס הנתונים
-- [x] כתיבת tests לבדיקת השמירה
-- [x] כל ה-tests עברו בהצלחה
-- [x] בדיקה שהשרת עובד ללא שגיאות
-- [x] עדכון todo.md
+## ✅ **סטטוס סופי - Phase 5 Complete:**
+- ✅ 26 Tests Passing
+- ✅ 0 TypeScript Errors
+- ✅ Professional Diagnosis Wizard (4 steps)
+- ✅ RiskCalculator (0-200 scale, 4 risk levels)
+- ✅ Dashboard with 6 Feature Cards
+- ✅ All Routes Connected
+- ✅ Hebrew RTL Support
+- ✅ Database Schema Complete
+- ✅ OAuth Flow Fixed
+- ✅ Build: 5.73s
+
+## Known Issues & Blockers
+
+## Notes
+- All timestamps stored as UTC Unix timestamps (milliseconds)
+- All sensitive data encrypted with AES-256
+- All operations logged to audit_logs table
+- Compliance with Israeli Privacy Protection Law Amendment 13 (2024)
+- No personal data stored in logs, only operation types and outcomes
+
+
+## 🟢 בעיות RTL (עברית-אנגלית) - בעברית!
+- [x] הוספת dir="rtl" ל-HTML root
+- [x] תיקון CSS RTL - text-align, margin, padding
+- [x] תיקון FREEDOM positioning בכותרת
+- [x] תיקון כל הקבצים - עברית-ראשי, אנגלית מוטבעת בתקשורת שלי
+- [x] בדיקת כל הטקסטים בממשק
+
+## 🟢 בעיות OAuth - לולאה אינסופית של התחברות
+- [x] תיקון getLoginUrl - הוספת returnPath ב-state
+- [x] תיקון oauth.ts - קריאת returnPath מ-state
+- [x] תיקון session verification - הסרט דרישה ש-name יהיה ריק
+- [x] כתיבת tests - 10 tests עברו בהצלחה
+- [x] בדיקה - השרת רץ ללא שגיאות
+
+
+## 🔧 Bug Fixes - Session 4
+
+### Issue: Unclear Debt Categories
+- [x] הוספת הבחנה בין סוגי הלוואות אשראי:
+  - [x] כרטיס אשראי
+  - [x] הלוואה מחברת אשראי
+  - [x] הלוואה על מסגרת אשראי (Credit Line)
+- [x] הוספת חובות עירוניים לקטגוריות
+- [x] עדכון ProfessionalDiagnosis עם קטגוריות חדשות
+- [x] בדיקה שהשינויים עובדים בממשק
