@@ -179,3 +179,12 @@
 - [x] הוספת real-time conversion - כשמקלידים סכום, מופיע בשקלים
 - [x] Build: 4.91s
 - [x] 26 tests passing
+
+
+## Phase 9: Dual Landing Pages - Customer vs Professional
+- [x] בנייה של Professional Landing Page - דף נחיתה לבעולי מקצוע
+- [x] עדכון Home page - הוספת 2 כפתורי התחברות (בעל חוב / בעל מקצוע)
+- [x] יצירת ניתוב לפי סוג משתמש
+- [x] בדיקה וtests
+- [x] Build: 5.30s
+- [x] 26 tests passing
