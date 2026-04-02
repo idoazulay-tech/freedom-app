@@ -1,9 +1,9 @@
-import { useAuth } from '@/_core/hooks/useAuth';
 import DashboardLayout from '@/components/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Plus, FileText, CheckSquare, Users, TrendingDown, AlertCircle, ChevronRight, Mail, Calculator, BarChart3, Scan, Scale } from 'lucide-react';
 import { trpc } from '@/lib/trpc';
+import { useAuth } from '@/_core/hooks/useAuth';
 import { useLocation } from 'wouter';
 import { useState } from 'react';
 
@@ -30,8 +30,8 @@ export default function Dashboard() {
       <DashboardLayout>
         <div className="space-y-8">
           <div>
-            <h1 className="text-3xl font-bold text-white mb-2">ברוכים הבאים, {user?.name}</h1>
-            <p className="text-slate-400">בואו נתחיל בסיווג החוב שלך</p>
+            <h1 className="text-3xl font-bold mb-2">ברוכים הבאים, {user?.name}</h1>
+            <p className="text-gray-600">בואו נתחיל בסיווג החוב שלך</p>
           </div>
 
           <Card className="bg-slate-800 border-slate-700">
@@ -42,13 +42,22 @@ export default function Dashboard() {
                 <p className="text-slate-400 mb-6">
                   בואו נתחיל בסיווג החוב שלך כדי לקבל תוכנית פעולה מותאמת אישית
                 </p>
-                <Button
-                  onClick={() => setLocation('/diagnosis-professional')}
-                  className="bg-blue-600 hover:bg-blue-700"
-                >
-                  <Plus className="w-4 h-4 ml-2" />
-                  התחל אבחון מקצועי
-                </Button>
+                <div className="flex gap-3 justify-center">
+                  <Button
+                    onClick={() => setLocation('/debt-form')}
+                    className="bg-blue-600 hover:bg-blue-700"
+                  >
+                    <Plus className="w-4 h-4 ml-2" />
+                    התחל אבחון
+                  </Button>
+                  <Button
+                    onClick={() => setLocation('/diagnosis-professional')}
+                    variant="outline"
+                  >
+                    <Users className="w-4 h-4 ml-2" />
+                    אבחון מקצועי
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -62,8 +71,8 @@ export default function Dashboard() {
       <div className="space-y-8">
         {/* Header */}
         <div>
-          <h1 className="text-3xl font-bold text-white mb-2">ברוכים הבאים, {user?.name} 👋</h1>
-          <p className="text-slate-400">הנה סיכום המצב של החובות שלך וצעדיך הבאים</p>
+          <h1 className="text-3xl font-bold mb-2">ברוכים הבאים, {user?.name} 👋</h1>
+          <p className="text-gray-600">הנה סיכום המצב של החובות שלך וצעדיך הבאים</p>
         </div>
 
         {/* Case Selector */}
@@ -85,14 +94,24 @@ export default function Dashboard() {
                 </button>
               ))}
             </div>
-            <Button
-              size="sm"
-              onClick={() => setLocation('/diagnosis-professional')}
-              className="ml-auto bg-green-600 hover:bg-green-700"
-            >
-              <Plus className="w-4 h-4 ml-2" />
-              הוסף חוב חדש
-            </Button>
+            <div className="flex gap-2 ml-auto">
+              <Button
+                size="sm"
+                onClick={() => setLocation('/debt-form')}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                <Plus className="w-4 h-4 ml-2" />
+                הוסף חוב חדש
+              </Button>
+              <Button
+                size="sm"
+                onClick={() => setLocation('/diagnosis-professional')}
+                variant="outline"
+              >
+                <Users className="w-4 h-4 ml-2" />
+                אבחון מקצועי
+              </Button>
+            </div>
           </div>
         )}
 

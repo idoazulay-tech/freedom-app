@@ -17,6 +17,7 @@ import Calculator from './pages/Calculator';
 import DebtTracker from './pages/DebtTracker';
 import DocumentScanner from './pages/DocumentScanner';
 import Lawyers from './pages/Lawyers';
+import DebtForm from './pages/DebtForm';
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
@@ -24,8 +25,9 @@ function Router() {
     <Switch>
       <Route path={"/"} component={Home} />
       <Route path={"/dashboard"} component={Dashboard} />
+      <Route path={"/debt-form"} component={DebtForm} />
       <Route path={"/triage"} component={TriageWizard} />
-       <Route path="/diagnosis-professional" component={ProfessionalDiagnosis} />
+      <Route path="/diagnosis-professional" component={ProfessionalDiagnosis} />
       <Route path="/diagnosis-results" component={DiagnosisResults} />
       <Route path={"/diagnosis"} component={Diagnosis} />
       <Route path={"/profile"} component={Profile} />
