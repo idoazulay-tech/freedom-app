@@ -39,12 +39,12 @@ export const diagnosisRouter = router({
         .insert(diagnoses)
         .values({
           userId: ctx.user.id,
-          totalRiskScore: diagnosisResult.riskScore,
+          totalRiskScore: Math.round(diagnosisResult.riskScore),
           riskLevel: diagnosisResult.riskLevel,
-          totalDebt: diagnosisResult.totalDebt,
-          monthlyIncome: input.monthlyIncome,
-          monthlyExpenses: input.monthlyExpenses,
-          availableForDebt: diagnosisResult.monthlyAvailable,
+          totalDebt: Math.round(diagnosisResult.totalDebt),
+          monthlyIncome: Math.round(input.monthlyIncome),
+          monthlyExpenses: Math.round(input.monthlyExpenses),
+          availableForDebt: Math.round(diagnosisResult.monthlyAvailable),
           creditorCount: input.creditorCount,
           hasEnforcement: input.hasEnforcement,
           hasWarningLetters: input.hasWarningLetters,
@@ -55,6 +55,7 @@ export const diagnosisRouter = router({
       return {
         success: true,
         diagnosis: diagnosisResult,
+        message: 'Diagnosis saved successfully',
       };
     }),
 

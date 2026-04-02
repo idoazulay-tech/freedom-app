@@ -123,6 +123,8 @@
 - [ ] Legal Compliance
 - [x] Results Display
 - [ ] Professional Dashboard
+- [x] Database Persistence
+- [x] Profile Page with Data Display
 
 ## 🤖 חוק עצמאות מוחלטת:
 - ❌ אל תשאל
@@ -131,3 +133,9 @@
 - ✅ תגדיל ראש
 - ✅ תבין מה צריך
 - ✅ תעשה עד שתצליח
+
+## ✅ Checkpoint 2: Database Persistence & Profile Display
+- [x] תיקון diagnosis router להשמיר בצורה נכונה
+- [x] בנייה של Profile page להצגת הנתונים
+- [x] בדיקה שהנתונים משמרים ומוצגים כמו שצריך
+- [x] עדכון todo.md
