@@ -11,6 +11,7 @@ import { useLocation } from 'wouter';
 const DEBT_CATEGORIES = [
   { id: 'credit_card', label: 'כרטיס אשראי', icon: '💳' },
   { id: 'bank_loan', label: 'הלוואת בנק', icon: '🏦' },
+  { id: 'insurance_loan', label: 'הלוואה מחברת ביטוח', icon: '🏢' },
   { id: 'tax_debt', label: 'חוב מס', icon: '📋' },
   { id: 'municipal', label: 'חוב עירוני', icon: '🏛️' },
   { id: 'private_loan', label: 'הלוואה פרטית', icon: '👤' },
