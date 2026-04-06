@@ -6,34 +6,40 @@ import { Button } from '@/components/ui/button';
 import { trpc } from '@/lib/trpc';
 import { toast } from 'sonner';
 import { ArrowRight } from 'lucide-react';
+import { useLocation } from 'wouter';
 
 interface FormData {
   debts: Array<{ category: string; amount: number; riskScore: number }>;
   totalRisk: number;
   totalAmount: number;
+  monthlyIncome: number;
+  monthlyExpenses: number;
+  hasEnforcement: boolean;
+  hasWarningLetters: boolean;
   diagnosisData: Record<string, any>;
 }
 
 export default function ProfessionalDiagnosis() {
   const { user } = useAuth();
+  const [, setLocation] = useLocation();
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState<FormData>({
     debts: [],
     totalRisk: 0,
     totalAmount: 0,
+    monthlyIncome: 0,
+    monthlyExpenses: 0,
+    hasEnforcement: false,
+    hasWarningLetters: false,
     diagnosisData: {},
   });
 
   const saveMutation = trpc.diagnosis.save.useMutation({
     onSuccess: () => {
       toast.success('אבחון נשמר בהצלחה!');
-      setStep(1);
-      setFormData({
-        debts: [],
-        totalRisk: 0,
-        totalAmount: 0,
-        diagnosisData: {},
-      });
+      setTimeout(() => {
+        setLocation('/profile');
+      }, 1000);
     },
     onError: (error: any) => {
       toast.error(`שגיאה: ${error.message}`);
@@ -50,16 +56,17 @@ export default function ProfessionalDiagnosis() {
 
   const handleSubmit = async () => {
     try {
+      const availableForDebt = Math.max(0, formData.monthlyIncome - formData.monthlyExpenses);
       await saveMutation.mutateAsync({
         riskScore: formData.totalRisk,
         riskLevel: formData.totalRisk > 150 ? 'critical' : formData.totalRisk > 100 ? 'high' : formData.totalRisk > 50 ? 'medium' : 'low',
         totalDebt: formData.totalAmount,
-        monthlyIncome: 0,
-        monthlyExpenses: 0,
-        availableForDebt: 0,
+        monthlyIncome: formData.monthlyIncome,
+        monthlyExpenses: formData.monthlyExpenses,
+        availableForDebt,
         creditorCount: formData.debts.length,
-        hasEnforcement: false,
-        hasWarningLetters: false,
+        hasEnforcement: formData.hasEnforcement,
+        hasWarningLetters: formData.hasWarningLetters,
         debts: formData.debts,
         actions: [],
       });
@@ -133,17 +140,39 @@ export default function ProfessionalDiagnosis() {
             {/* Step 2: Debt Details */}
             {step === 2 && (
               <div className="space-y-4">
-                <p className="text-slate-300">הוסף פרטי החוב:</p>
+                <p className="text-slate-300 mb-4">הוסף פרטי החוב:</p>
                 <div className="space-y-3">
-                  <input
-                    type="number"
-                    placeholder="סכום החוב (₪)"
-                    value={formData.totalAmount}
-                    onChange={(e) => setFormData({ ...formData, totalAmount: Number(e.target.value) })}
-                    className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400"
-                  />
+                  <div>
+                    <label className="text-white block mb-2">סכום החוב (₪)</label>
+                    <input
+                      type="number"
+                      placeholder="הקלד את סכום החוב"
+                      value={formData.totalAmount || ''}
+                      onChange={(e) => setFormData({ ...formData, totalAmount: Number(e.target.value) })}
+                      className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400"
+                    />
+                    {formData.totalAmount > 0 && (
+                      <div className="mt-2 p-3 bg-blue-500/20 border border-blue-500/30 rounded-lg">
+                        <p className="text-blue-300 text-sm">סכום: ₪{formData.totalAmount.toLocaleString('he-IL')}</p>
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="text-white block mb-2">ניקוד סיכון (0-200)</label>
+                    <input
+                      type="number"
+                      placeholder="ניקוד סיכון"
+                      value={formData.totalRisk || ''}
+                      onChange={(e) => setFormData({ ...formData, totalRisk: Number(e.target.value) })}
+                      className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400"
+                      min="0"
+                      max="200"
+                    />
+                  </div>
+
                   <textarea
-                    placeholder="הערה על החוב"
+                    placeholder="הערה על החוב (אופציונלי)"
                     value={formData.diagnosisData.notes || ''}
                     onChange={(e) => setFormData({
                       ...formData,
@@ -159,29 +188,59 @@ export default function ProfessionalDiagnosis() {
             {/* Step 3: Diagnosis Questions */}
             {step === 3 && (
               <div className="space-y-4">
-                <p className="text-slate-300">ענה על השאלות:</p>
-                <div className="space-y-3">
-                  {[
-                    'האם יש הוצל"פ פעיל?',
-                    'האם יש הליך משפטי?',
-                    'האם יש משכנתא?',
-                  ].map((question, idx) => (
-                    <div key={idx} className="flex items-center gap-3 p-3 bg-slate-700 rounded-lg">
-                      <input
-                        type="checkbox"
-                        id={`q${idx}`}
-                        onChange={(e) => {
-                          const newData = { ...formData.diagnosisData };
-                          newData[`q${idx}`] = e.target.checked;
-                          setFormData({ ...formData, diagnosisData: newData });
-                        }}
-                        className="w-4 h-4"
-                      />
-                      <label htmlFor={`q${idx}`} className="text-white cursor-pointer flex-1">
-                        {question}
-                      </label>
-                    </div>
-                  ))}
+                <p className="text-slate-300 mb-4">עונה על השאלות הבאות:</p>
+                <div className="space-y-4">
+                  {/* Income */}
+                  <div>
+                    <label className="text-white block mb-2">הכנסה חודשית (₪)</label>
+                    <input
+                      type="number"
+                      placeholder="הכנסה חודשית"
+                      value={formData.monthlyIncome || ''}
+                      onChange={(e) => setFormData({ ...formData, monthlyIncome: Number(e.target.value) })}
+                      className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400"
+                    />
+                  </div>
+
+                  {/* Expenses */}
+                  <div>
+                    <label className="text-white block mb-2">הוצאות חודשיות (₪)</label>
+                    <input
+                      type="number"
+                      placeholder="הוצאות חודשיות"
+                      value={formData.monthlyExpenses || ''}
+                      onChange={(e) => setFormData({ ...formData, monthlyExpenses: Number(e.target.value) })}
+                      className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400"
+                    />
+                  </div>
+
+                  {/* Enforcement */}
+                  <div className="flex items-center gap-3 p-3 bg-slate-700 rounded-lg">
+                    <input
+                      type="checkbox"
+                      id="enforcement"
+                      checked={formData.hasEnforcement}
+                      onChange={(e) => setFormData({ ...formData, hasEnforcement: e.target.checked })}
+                      className="w-4 h-4"
+                    />
+                    <label htmlFor="enforcement" className="text-white cursor-pointer flex-1">
+                      האם יש הוצל"פ פעיל?
+                    </label>
+                  </div>
+
+                  {/* Warning Letters */}
+                  <div className="flex items-center gap-3 p-3 bg-slate-700 rounded-lg">
+                    <input
+                      type="checkbox"
+                      id="warnings"
+                      checked={formData.hasWarningLetters}
+                      onChange={(e) => setFormData({ ...formData, hasWarningLetters: e.target.checked })}
+                      className="w-4 h-4"
+                    />
+                    <label htmlFor="warnings" className="text-white cursor-pointer flex-1">
+                      האם יש מכתבי התראה?
+                    </label>
+                  </div>
                 </div>
               </div>
             )}
@@ -194,8 +253,32 @@ export default function ProfessionalDiagnosis() {
                   <p className="text-2xl font-bold text-white">₪{formData.totalAmount.toLocaleString('he-IL')}</p>
                 </div>
                 <div className="bg-slate-700 rounded-lg p-4 space-y-2">
-                  <p className="text-slate-400">רמת סיכון:</p>
-                  <p className="text-2xl font-bold text-white">{formData.totalRisk}</p>
+                  <p className="text-slate-400">ניקוד סיכון:</p>
+                  <p className="text-2xl font-bold text-white">{formData.totalRisk}/200</p>
+                </div>
+                <div className="bg-slate-700 rounded-lg p-4 space-y-2">
+                  <p className="text-slate-400">הכנסה חודשית:</p>
+                  <p className="text-xl font-bold text-white">₪{formData.monthlyIncome.toLocaleString('he-IL')}</p>
+                </div>
+                <div className="bg-slate-700 rounded-lg p-4 space-y-2">
+                  <p className="text-slate-400">הוצאות חודשיות:</p>
+                  <p className="text-xl font-bold text-white">₪{formData.monthlyExpenses.toLocaleString('he-IL')}</p>
+                </div>
+                <div className="bg-slate-700 rounded-lg p-4 space-y-2">
+                  <p className="text-slate-400">זמין לחוב:</p>
+                  <p className={`text-xl font-bold ${Math.max(0, formData.monthlyIncome - formData.monthlyExpenses) > 0 ? 'text-green-400' : 'text-red-400'}`}>
+                    ₪{Math.max(0, formData.monthlyIncome - formData.monthlyExpenses).toLocaleString('he-IL')}
+                  </p>
+                </div>
+                <div className="flex gap-4">
+                  <div className="flex-1 bg-slate-700 rounded-lg p-4">
+                    <p className="text-slate-400 text-sm">הוצל"פ פעיל:</p>
+                    <p className="text-lg font-bold text-white">{formData.hasEnforcement ? 'כן ⚠️' : 'לא ✓'}</p>
+                  </div>
+                  <div className="flex-1 bg-slate-700 rounded-lg p-4">
+                    <p className="text-slate-400 text-sm">מכתבי התראה:</p>
+                    <p className="text-lg font-bold text-white">{formData.hasWarningLetters ? 'כן ⚠️' : 'לא ✓'}</p>
+                  </div>
                 </div>
               </div>
             )}

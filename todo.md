@@ -1,45 +1,45 @@
 # Freedom - Autonomous Debt Management Ecosystem - TODO
 
 ## Phase 1: Database Schema & Core Infrastructure
-- [ ] Implement Drizzle schema for users table with roles (debtor, professional, admin)
-- [ ] Create cases/debt_profiles table with severity levels and persona classification
-- [ ] Build documents table with encryption metadata and audit trail
-- [ ] Implement tasks table with status tracking and deadline management
-- [ ] Create consent_records table for privacy law compliance (Amendment 13)
-- [ ] Build audit_logs table for all sensitive operations
-- [ ] Implement professional_profiles table with specializations
-- [ ] Create matching_rules table for algorithm configuration
-- [ ] Set up database migrations and seed initial data
-- [ ] Implement AES-256 encryption helper functions
+- [x] Implement Drizzle schema for users table with roles (debtor, professional, admin)
+- [x] Create cases/debt_profiles table with severity levels and persona classification
+- [x] Build documents table with encryption metadata and audit trail
+- [x] Implement tasks table with status tracking and deadline management
+- [x] Create consent_records table for privacy law compliance (Amendment 13)
+- [x] Build audit_logs table for all sensitive operations
+- [x] Implement professional_profiles table with specializations
+- [x] Create matching_rules table for algorithm configuration
+- [x] Set up database migrations and seed initial data
+- [x] Implement AES-256 encryption helper functions
 
 ## Phase 2: Authentication & Security
-- [ ] Implement OAuth 2FA flow integration
+- [x] Implement OAuth 2FA flow integration
 - [ ] Build WebAuthn biometric authentication (fingerprint/face)
-- [ ] Create session management with secure cookies
-- [ ] Implement role-based access control (RBAC) middleware
-- [ ] Build consent verification system for data access
-- [ ] Create audit logging for all auth events
+- [x] Create session management with secure cookies
+- [x] Implement role-based access control (RBAC) middleware
+- [x] Build consent verification system for data access
+- [x] Create audit logging for all auth events
 - [ ] Implement password reset and account recovery flows
 - [ ] Set up rate limiting for login attempts
 
 ## Phase 3: Backend API Layer
-- [ ] Build case management procedures (create, read, update, list)
-- [ ] Implement document upload/download with encryption
-- [ ] Create task management procedures
-- [ ] Build professional matching procedures
-- [ ] Implement consent management procedures
-- [ ] Create notification trigger procedures
-- [ ] Build reporting and analytics procedures
-- [ ] Implement audit log query procedures
+- [x] Build case management procedures (create, read, update, list)
+- [x] Implement document upload/download with encryption
+- [x] Create task management procedures
+- [x] Build professional matching procedures
+- [x] Implement consent management procedures
+- [x] Create notification trigger procedures
+- [x] Build reporting and analytics procedures
+- [x] Implement audit log query procedures
 
 ## Phase 4: AI Integration Pipeline
-- [ ] Implement LLM-based debt triage system (Yossi/Dana/Avi classification)
+- [x] Implement LLM-based debt triage system (Yossi/Dana/Avi classification)
 - [ ] Build document OCR and text extraction
 - [ ] Implement AI document summarization
 - [ ] Create AI-powered task extraction from documents
-- [ ] Build professional matching algorithm
-- [ ] Implement severity level detection
-- [ ] Create risk assessment AI agent
+- [x] Build professional matching algorithm
+- [x] Implement severity level detection
+- [x] Create risk assessment AI agent
 - [ ] Build compliance checking AI agent
 
 ## Phase 5: Frontend - Personal Path Dashboard
@@ -51,6 +51,9 @@
 - [x] Create 5 new components for diagnosis flow
 - [x] Add database schema for diagnoses table
 - [x] Implement diagnosisRouter with save/retrieve procedures
+- [x] Expand questionnaire to collect all required data (income, expenses, enforcement, warnings)
+- [x] Build comprehensive Profile page with all diagnosis data display
+- [x] Implement redirect from diagnosis to profile after save
 - [ ] Create documents section with upload/download
 - [ ] Build tasks section with reminders
 - [ ] Implement notifications center
@@ -197,46 +200,46 @@
 - [x] חוק #5: שאלות הבהרה - אם לא ברור, שאל
 
 ### Part 1: 42 Expense Categories
-- [ ] Create EXPENSES_42 constant with all categories
-- [ ] Add to database schema (expenses table)
-- [ ] Update UI to show all categories in dropdown
-- [ ] Add category icons (lucide-react)
-- [ ] Add category descriptions and tooltips
-- [ ] Implement category search/filter
+- [x] Create EXPENSES_42 constant with all categories
+- [x] Add to database schema (expenses table)
+- [x] Update UI to show all categories in dropdown
+- [x] Add category icons (lucide-react)
+- [x] Add category descriptions and tooltips
+- [x] Implement category search/filter
 
 ### Part 2: 12 APIs with JSON Schema & Error Handling
-- [ ] POST /api/debts/add (Add debt) - with schema validation
-- [ ] GET /api/debts/list (List debts) - with pagination
-- [ ] PUT /api/debts/:id (Update debt) - with validation
-- [ ] DELETE /api/debts/:id (Delete debt) - with soft delete
-- [ ] POST /api/expenses/add (Add expense) - with schema
-- [ ] GET /api/expenses/list (List expenses) - with filters
-- [ ] POST /api/diagnosis/perform (Run diagnosis) - AI analysis
-- [ ] GET /api/diagnosis/history (Get history) - with pagination
-- [ ] POST /api/professionals/match (Match professionals) - scoring
-- [ ] POST /api/payment-plan/generate (Generate plan) - calculations
-- [ ] POST /api/tasks/create (Create task) - automation
-- [ ] GET /api/tasks/list (List tasks) - with status
+- [x] POST /api/debts/add (Add debt) - with schema validation
+- [x] GET /api/debts/list (List debts) - with pagination
+- [x] PUT /api/debts/:id (Update debt) - with validation
+- [x] DELETE /api/debts/:id (Delete debt) - with soft delete
+- [x] POST /api/expenses/add (Add expense) - with schema
+- [x] GET /api/expenses/list (List expenses) - with filters
+- [x] POST /api/diagnosis/perform (Run diagnosis) - AI analysis
+- [x] GET /api/diagnosis/history (Get history) - with pagination
+- [x] POST /api/professionals/match (Match professionals) - scoring
+- [x] POST /api/payment-plan/generate (Generate plan) - calculations
+- [x] POST /api/tasks/create (Create task) - automation
+- [x] GET /api/tasks/list (List tasks) - with status
 
 ### Part 3: Stripe Integration
-- [ ] Set up Stripe API keys in environment
-- [ ] Create payment intent endpoint (/api/payments/intent)
-- [ ] Create subscription endpoint (/api/subscriptions/create)
-- [ ] Add Stripe webhook handler (/api/webhooks/stripe)
-- [ ] Create payment UI component (PaymentForm)
+- [x] Set up Stripe API keys in environment
+- [x] Create payment intent endpoint (/api/payments/intent)
+- [x] Create subscription endpoint (/api/subscriptions/create)
+- [x] Add Stripe webhook handler (/api/webhooks/stripe)
+- [x] Create payment UI component (PaymentForm)
 - [ ] Test payment flow end-to-end
 - [ ] Add error handling for failed payments
 - [ ] Implement retry logic for failed charges
 
 ### Part 4: Free/Premium Logic
-- [ ] Create pricing model (free = 2 debts, premium = unlimited)
-- [ ] Add subscription check middleware
-- [ ] Limit free users to 2 debts maximum
-- [ ] Limit free users to basic features only
-- [ ] Create upgrade prompt component
-- [ ] Track subscription status in database
-- [ ] Implement subscription renewal logic
-- [ ] Add downgrade protection (keep data on downgrade)
+- [x] Create pricing model (free = 2 debts, premium = unlimited)
+- [x] Add subscription check middleware
+- [x] Limit free users to 2 debts maximum
+- [x] Limit free users to basic features only
+- [x] Create upgrade prompt component
+- [x] Track subscription status in database
+- [x] Implement subscription renewal logic
+- [x] Add downgrade protection (keep data on downgrade)
 
 ### Part 5: Mobile Responsive (< 600px)
 - [ ] Test on iPhone SE (375px)
