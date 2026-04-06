@@ -27,7 +27,7 @@ interface DiagnosisData {
   monthlyIncome: number | null;
   monthlyExpenses: number | null;
   availableForDebt: number | null;
-  creditorCount: number;
+  creditorCount: number | null;
   hasEnforcement: boolean | null;
   hasWarningLetters: boolean | null;
   debtsData: string;

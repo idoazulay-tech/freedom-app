@@ -8,7 +8,7 @@ interface DiagnosisData {
   monthlyIncome: number | null;
   monthlyExpenses: number | null;
   availableForDebt: number | null;
-  creditorCount: number;
+  creditorCount: number | null;
   hasEnforcement: boolean | null;
   hasWarningLetters: boolean | null;
   riskLevel: string;
@@ -31,7 +31,8 @@ export default function AdvancedScoringSection({ diagnosis }: { diagnosis: Diagn
     let enforcementScore = 0;
     if (diagnosis.hasEnforcement) enforcementScore += 15;
     if (diagnosis.hasWarningLetters) enforcementScore += 5;
-    if (diagnosis.creditorCount > 5) enforcementScore += Math.min(5, diagnosis.creditorCount - 5);
+    const creditorCountForEnforcement = diagnosis.creditorCount || 0;
+    if (creditorCountForEnforcement > 5) enforcementScore += Math.min(5, creditorCountForEnforcement - 5);
     enforcementScore = Math.min(20, enforcementScore);
 
     const expenseRatio = monthlyExpenses / monthlyIncome;
@@ -43,9 +44,10 @@ export default function AdvancedScoringSection({ diagnosis }: { diagnosis: Diagn
     else incomeStabilityScore = 0;
 
     let creditorDiversityScore = 0;
-    if (diagnosis.creditorCount === 1) creditorDiversityScore = 8;
-    else if (diagnosis.creditorCount <= 3) creditorDiversityScore = 5;
-    else if (diagnosis.creditorCount <= 5) creditorDiversityScore = 3;
+    const creditorCount = diagnosis.creditorCount || 0;
+    if (creditorCount === 1) creditorDiversityScore = 8;
+    else if (creditorCount <= 3) creditorDiversityScore = 5;
+    else if (creditorCount <= 5) creditorDiversityScore = 3;
     else creditorDiversityScore = 0;
 
     let paymentHistoryScore = 0;

@@ -204,10 +204,174 @@ export const diagnosisRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      // In a real app, this would create a request record and send notifications
       return {
         success: true,
         message: `בקשה נשלחה ל-${PROFESSIONALS.find((p) => p.id === input.professionalId)?.name}`,
       };
+    }),
+
+  // Payment Plan procedures
+  calculatePaymentPlan: protectedProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) return null;
+    const diagnosis = await db
+      .select()
+      .from(diagnoses)
+      .where(eq(diagnoses.userId, ctx.user.id))
+      .orderBy(diagnoses.createdAt)
+      .limit(1);
+    if (!diagnosis.length) return null;
+    const diag = diagnosis[0];
+    const monthlyPayment = Math.ceil(diag.totalDebt / 60);
+    return {
+      monthlyPayment,
+      duration: 60,
+      totalInterest: Math.ceil(monthlyPayment * 60 * 0.05),
+      totalPayments: diag.totalDebt + Math.ceil(monthlyPayment * 60 * 0.05),
+      strategy: diag.riskLevel === 'critical' ? 'aggressive' : 'balanced',
+    };
+  }),
+
+  // Advanced Scoring procedures
+  calculateAdvancedScore: protectedProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) return null;
+    const diagnosis = await db
+      .select()
+      .from(diagnoses)
+      .where(eq(diagnoses.userId, ctx.user.id))
+      .orderBy(diagnoses.createdAt)
+      .limit(1);
+    if (!diagnosis.length) return null;
+    const diag = diagnosis[0];
+    
+    const debtRatio = Math.min(40, Math.ceil((diag.totalDebt / (Math.max(diag.monthlyIncome || 1, 1) * 12)) * 40));
+    const enforcement = diag.hasEnforcement ? 20 : 0;
+    const incomeStability = (diag.monthlyIncome || 0) > 5000 ? 0 : 20;
+    const creditorDiversity = Math.min(10, (diag.creditorCount || 0) * 2);
+    const paymentHistory = 10;
+    const legalComplexity = diag.hasWarningLetters ? 10 : 0;
+    
+    const totalScore = debtRatio + enforcement + incomeStability + creditorDiversity + paymentHistory + legalComplexity;
+    
+    return {
+      totalScore,
+      factors: [
+        { name: 'יחס חוב/הכנסה', score: debtRatio, max: 40 },
+        { name: 'הוצל"פ פעיל', score: enforcement, max: 20 },
+        { name: 'יציבות הכנסה', score: incomeStability, max: 20 },
+        { name: 'גיוון נושים', score: creditorDiversity, max: 10 },
+        { name: 'היסטוריית תשלומים', score: paymentHistory, max: 10 },
+        { name: 'מורכבות משפטית', score: legalComplexity, max: 10 },
+      ],
+    };
+  }),
+
+  // Documents procedures
+  saveDocument: protectedProcedure
+    .input(
+      z.object({
+        fileName: z.string(),
+        fileType: z.string(),
+        documentType: z.string(),
+        summary: z.string(),
+        keyPoints: z.array(z.string()),
+        riskFactors: z.array(z.string()),
+        recommendations: z.array(z.string()),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      return { success: true, documentId: Date.now() };
+    }),
+
+  listDocuments: protectedProcedure.query(async ({ ctx }) => {
+    return [];
+  }),
+
+  deleteDocument: protectedProcedure
+    .input(z.object({ documentId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      return { success: true };
+    }),
+
+  // Tasks procedures
+  generateTasks: protectedProcedure.mutation(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) return [];
+    
+    const diagnosis = await db
+      .select()
+      .from(diagnoses)
+      .where(eq(diagnoses.userId, ctx.user.id))
+      .orderBy(diagnoses.createdAt)
+      .limit(1);
+    
+    if (!diagnosis.length) return [];
+    
+    const diag = diagnosis[0];
+    const tasks = [];
+    
+    if (diag.hasEnforcement) {
+      tasks.push({
+        id: 1,
+        title: 'בקש ייעוץ משפטי',
+        description: 'יש הוצל"פ פעיל - בקש ייעוץ מעורך דין',
+        category: 'משפטי',
+        priority: 'urgent',
+        dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        estimatedHours: 2,
+      });
+    }
+    
+    if (diag.hasWarningLetters) {
+      tasks.push({
+        id: 2,
+        title: 'הגב על מכתבי התראה',
+        description: 'יש מכתבי התראה - הגב בהקדם',
+        category: 'משפטי',
+        priority: 'high',
+        dueDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
+        estimatedHours: 1,
+      });
+    }
+    
+    tasks.push({
+      id: 3,
+      title: 'יצירת קשר עם נושים',
+      description: 'צור קשר עם הנושים כדי להציע תוכנית פירעון',
+      category: 'תקשורת',
+      priority: 'high',
+      dueDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
+      estimatedHours: 3,
+    });
+    
+    return tasks;
+  }),
+
+  listTasks: protectedProcedure.query(async ({ ctx }) => {
+    return [];
+  }),
+
+  completeTask: protectedProcedure
+    .input(z.object({ taskId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      return { success: true };
+    }),
+
+  // Notifications procedures
+  listNotifications: protectedProcedure.query(async ({ ctx }) => {
+    return [];
+  }),
+
+  markNotificationAsRead: protectedProcedure
+    .input(z.object({ notificationId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      return { success: true };
+    }),
+
+  deleteNotification: protectedProcedure
+    .input(z.object({ notificationId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      return { success: true };
     }),
 });

@@ -9,7 +9,7 @@ interface DiagnosisData {
   totalDebt: number;
   monthlyIncome: number | null;
   monthlyExpenses: number | null;
-  creditorCount: number;
+  creditorCount: number | null;
   hasEnforcement: boolean | null;
   hasWarningLetters: boolean | null;
   riskLevel: string;
@@ -77,29 +77,30 @@ export default function TasksSection({ diagnosis }: { diagnosis: DiagnosisData }
     }
 
     // Task 3: Contact creditors
-    if (diagnosis.creditorCount > 0) {
+    const creditorCount = diagnosis.creditorCount || 0;
+    if (creditorCount > 0) {
       generatedTasks.push({
         id: 'task-creditor-contact',
-        title: `צור קשר עם ${diagnosis.creditorCount} נושים`,
+        title: `צור קשר עם ${creditorCount} נושים`,
         description:
           'צור קשר עם כל הנושים שלך. הציע להם תוכנית פירעון מובנית וממוקדת.',
         priority: diagnosis.riskLevel === 'critical' ? 'urgent' : 'high',
         category: 'communication',
         dueDate: new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000),
         status: 'pending',
-        estimatedHours: diagnosis.creditorCount * 0.5,
+        estimatedHours: creditorCount * 0.5,
       });
 
       generatedTasks.push({
         id: 'task-creditor-negotiation',
         title: 'משא ומתן עם נושים',
         description:
-          'בקש הנחה בריביות, הארכת תקופת פירעון, או הסדר חד פעמי. תיעד את כל התקשורת.',
+          'בקש הנחה בריביות, הארכת תקופת פירעון, או הסדר חד פעמי. תיעד את כל התקשורה.',
         priority: diagnosis.riskLevel === 'critical' ? 'urgent' : 'high',
         category: 'negotiation',
         dueDate: new Date(today.getTime() + 14 * 24 * 60 * 60 * 1000),
         status: 'pending',
-        estimatedHours: diagnosis.creditorCount * 1,
+        estimatedHours: creditorCount * 1,
       });
     }
 
