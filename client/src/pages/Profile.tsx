@@ -5,6 +5,12 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { trpc } from '@/lib/trpc';
 import { AlertCircle, CheckCircle, Clock, Users, TrendingDown, FileText } from 'lucide-react';
+import PaymentPlanSection from '@/components/PaymentPlanSection';
+import ProfessionalsSection from '@/components/ProfessionalsSection';
+import AdvancedScoringSection from '@/components/AdvancedScoringSection';
+import TasksSection from '@/components/TasksSection';
+import DocumentsSection from '@/components/DocumentsSection';
+import NotificationsCenter from '@/components/NotificationsCenter';
 
 interface Debt {
   category: string;
@@ -14,48 +20,44 @@ interface Debt {
 
 interface DiagnosisData {
   id: number;
-  userId: string;
+  userId: number | string;
   totalRiskScore: number;
   riskLevel: string;
   totalDebt: number;
-  monthlyIncome: number;
-  monthlyExpenses: number;
-  availableForDebt: number;
+  monthlyIncome: number | null;
+  monthlyExpenses: number | null;
+  availableForDebt: number | null;
   creditorCount: number;
-  hasEnforcement: boolean;
-  hasWarningLetters: boolean;
+  hasEnforcement: boolean | null;
+  hasWarningLetters: boolean | null;
   debtsData: string;
   actionsData: string;
   createdAt: Date;
-  updatedAt: Date;
+  updatedAt: Date | null;
 }
 
 export default function Profile() {
-  const [diagnosis, setDiagnosis] = useState<DiagnosisData | null>(null);
   const [debts, setDebts] = useState<Debt[]>([]);
   const [actions, setActions] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
 
-  const { data: diagnosisData } = trpc.diagnosis.getMine.useQuery();
+   const { data: diagnosis, isLoading } = trpc.diagnosis.getMine.useQuery();
 
   useEffect(() => {
-    if (diagnosisData) {
-      setDiagnosis(diagnosisData);
+    if (diagnosis) {
       try {
-        const parsedDebts = JSON.parse(diagnosisData.debtsData || '[]');
+        const parsedDebts = JSON.parse(diagnosis.debtsData || '[]');
         setDebts(parsedDebts);
       } catch {
         setDebts([]);
       }
       try {
-        const parsedActions = JSON.parse(diagnosisData.actionsData || '[]');
+        const parsedActions = JSON.parse(diagnosis.actionsData || '[]');
         setActions(parsedActions);
       } catch {
         setActions([]);
       }
-      setIsLoading(false);
     }
-  }, [diagnosisData]);
+  }, [diagnosis]);
 
   const getRiskColor = (level: string) => {
     switch (level?.toLowerCase()) {
@@ -86,7 +88,7 @@ export default function Profile() {
     }
   };
 
-  if (isLoading) {
+  if (isLoading || !diagnosis) {
     return (
       <DashboardLayout>
         <div className="space-y-8">
@@ -181,16 +183,16 @@ export default function Profile() {
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-300">הכנסה חודשית:</span>
-                <span className="text-white font-bold">₪{diagnosis.monthlyIncome.toLocaleString()}</span>
+                <span className="text-white font-bold">₪{(diagnosis.monthlyIncome || 0).toLocaleString()}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-300">הוצאות חודשיות:</span>
-                <span className="text-white font-bold">₪{diagnosis.monthlyExpenses.toLocaleString()}</span>
+                <span className="text-white font-bold">₪{(diagnosis.monthlyExpenses || 0).toLocaleString()}</span>
               </div>
               <div className="border-t border-slate-700 pt-3 flex justify-between">
                 <span className="text-slate-300">זמין לחוב:</span>
-                <span className={`font-bold ${diagnosis.availableForDebt > 0 ? 'text-green-400' : 'text-red-400'}`}>
-                  ₪{diagnosis.availableForDebt.toLocaleString()}
+                <span className={`font-bold ${(diagnosis.availableForDebt || 0) > 0 ? 'text-green-400' : 'text-red-400'}`}>
+                  ₪{((diagnosis.availableForDebt || 0)).toLocaleString()}
                 </span>
               </div>
             </CardContent>
@@ -273,8 +275,52 @@ export default function Profile() {
           </Card>
         )}
 
+        {/* Advanced Scoring Section */}
+        <div className="mt-8">
+          <h2 className="text-2xl font-bold text-white mb-6">ניתוח סיכון מתקדם</h2>
+          <AdvancedScoringSection diagnosis={diagnosis} />
+        </div>
+
+        {/* Payment Plan Section */}
+        <div className="mt-8">
+          <h2 className="text-2xl font-bold text-white mb-6">תוכנית פירעון</h2>
+          <PaymentPlanSection
+            diagnosis={{
+              totalDebt: diagnosis.totalDebt,
+              monthlyIncome: diagnosis.monthlyIncome || 0,
+              monthlyExpenses: diagnosis.monthlyExpenses || 0,
+              availableForDebt: diagnosis.availableForDebt || 0,
+              riskLevel: diagnosis.riskLevel,
+              hasEnforcement: diagnosis.hasEnforcement || false,
+            }}
+          />
+        </div>
+
+        {/* Notifications Center */}
+        <div className="mt-8">
+          <NotificationsCenter />
+        </div>
+
+        {/* Documents Section */}
+        <div className="mt-8">
+          <h2 className="text-2xl font-bold text-white mb-6">מסמכים</h2>
+          <DocumentsSection />
+        </div>
+
+        {/* Tasks Section */}
+        <div className="mt-8">
+          <h2 className="text-2xl font-bold text-white mb-6">משימות אוטומטיות</h2>
+          <TasksSection diagnosis={diagnosis} />
+        </div>
+
+        {/* Professionals Section */}
+        <div className="mt-8">
+          <h2 className="text-2xl font-bold text-white mb-6">בעלי מקצוע מומלצים</h2>
+          <ProfessionalsSection />
+        </div>
+
         {/* Action Buttons */}
-        <div className="flex gap-3 flex-wrap">
+        <div className="flex gap-3 flex-wrap mt-8">
           <Button className="bg-blue-600 hover:bg-blue-700">
             עדכן אבחון
           </Button>
@@ -287,8 +333,8 @@ export default function Profile() {
         </div>
 
         {/* Last Updated */}
-        <div className="text-center text-slate-400 text-sm">
-          <p>אבחון אחרון: {new Date(diagnosis.updatedAt).toLocaleDateString('he-IL')}</p>
+        <div className="text-center text-slate-400 text-sm mt-8">
+          <p>אבחון אחרון: {diagnosis.updatedAt ? new Date(diagnosis.updatedAt).toLocaleDateString('he-IL') : new Date(diagnosis.createdAt).toLocaleDateString('he-IL')}</p>
         </div>
       </div>
     </DashboardLayout>

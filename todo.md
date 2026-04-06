@@ -54,10 +54,10 @@
 - [x] Expand questionnaire to collect all required data (income, expenses, enforcement, warnings)
 - [x] Build comprehensive Profile page with all diagnosis data display
 - [x] Implement redirect from diagnosis to profile after save
-- [ ] Create documents section with upload/download
-- [ ] Build tasks section with reminders
-- [ ] Implement notifications center
-- [ ] Create professional matching UI
+- [x] Create documents section with upload/download
+- [x] Build tasks section with reminders
+- [x] Implement notifications center
+- [x] Create professional matching UI
 - [ ] Build case timeline/progress tracker
 - [ ] Implement messaging interface with professionals
 
@@ -295,3 +295,62 @@
 
 ⏱️ **זמן משוער:** X שעות
 ```
+
+
+## 🔧 **Phase 5+ Implementation Tasks (In Progress)**
+
+### Part 1: Wire Profile to Real Data + Professional Matching
+- [x] Connect Profile page to diagnosis.getMine() query
+- [x] Display matched professionals with scoring
+- [x] Show professional contact info and specializations
+- [x] Add "Request Professional" button
+- [x] Implement professional filtering by type
+
+### Part 2: Payment Plan Visualization
+- [x] Build payment plan calculation engine
+- [x] Create chart visualization (monthly payments)
+- [x] Add timeline view with milestones
+- [x] Show payment progress tracker
+- [x] Implement payment schedule export
+
+### Part 3: Advanced Scoring Engine
+- [x] Implement 6 risk factors (debt ratio, enforcement, income, etc.)
+- [x] Build persona classification (Yossi/Dana/Avi)
+- [x] Create risk level recommendations
+- [x] Add severity scoring algorithm
+- [x] Build scoring explanation UI
+
+### Part 4: Automated Tasks Generation
+- [x] Generate tasks based on diagnosis
+- [x] Create task priority system
+- [x] Build task tracking dashboard
+- [x] Implement deadline reminders
+- [x] Add task completion tracking
+
+### Part 5: Document Processing
+- [x] Implement document upload UI
+- [x] Build OCR integration
+- [x] Create AI text extraction
+- [x] Add document classification
+- [x] Build document archive system
+
+### Part 6: Notification System
+- [x] Build email notification service
+- [x] Implement WhatsApp integration
+- [x] Create in-app notification center
+- [x] Add notification preferences
+- [x] Build notification history
+
+### Part 7: Pro Hub Integration
+- [x] Connect professional dashboard
+- [x] Build client list with search
+- [x] Implement case management
+- [ ] Add messaging system
+- [x] Build analytics dashboard
+
+### Part 8: Testing & Verification
+- [x] Write tests for all new features
+- [x] Verify database persistence
+- [x] Test end-to-end flows
+- [ ] Performance testing
+- [ ] Security audit

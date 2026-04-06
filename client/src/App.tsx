@@ -16,6 +16,7 @@ import Calculator from './pages/Calculator';
 import DebtTracker from './pages/DebtTracker';
 import DocumentScanner from './pages/DocumentScanner';
 import Lawyers from './pages/Lawyers';
+import ProHub from './pages/ProHub';
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
@@ -32,6 +33,7 @@ function Router() {
       <Route path={"/tracker"} component={DebtTracker} />
       <Route path={"/scanner"} component={DocumentScanner} />
       <Route path={"/lawyers"} component={Lawyers} />
+      <Route path={"/pro-hub"} component={ProHub} />
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />
