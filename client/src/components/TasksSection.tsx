@@ -1,9 +1,10 @@
-import { useMemo, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { AlertCircle, CheckCircle, Clock, Filter } from 'lucide-react';
+import { trpc } from '@/lib/trpc';
 
 interface DiagnosisData {
   totalDebt: number;
@@ -29,142 +30,39 @@ interface Task {
 export default function TasksSection({ diagnosis }: { diagnosis: DiagnosisData }) {
   const [filterPriority, setFilterPriority] = useState<string | null>(null);
   const [completedTasks, setCompletedTasks] = useState<Set<string>>(new Set());
+  const [tasks, setTasks] = useState<Task[]>([]);
 
-  const tasks = useMemo(() => {
-    const generatedTasks: Task[] = [];
-    const today = new Date();
+  // Fetch generated tasks from server
+  const { data: generatedTasks, isLoading } = (trpc.diagnosis as any).generateTasks.useQuery({
+    hasEnforcement: diagnosis.hasEnforcement || false,
+    hasWarningLetters: diagnosis.hasWarningLetters || false,
+    creditorCount: diagnosis.creditorCount || 0,
+    totalDebt: diagnosis.totalDebt,
+    availableForDebt: Math.max(0, (diagnosis.monthlyIncome || 0) - (diagnosis.monthlyExpenses || 0)),
+    riskLevel: diagnosis.riskLevel,
+  });
 
-    // Task 1: Immediate legal action if enforcement is active
-    if (diagnosis.hasEnforcement) {
-      generatedTasks.push({
-        id: 'task-legal-enforcement',
-        title: 'בקש ייעוץ משפטי דחוף',
-        description:
-          'יש הוצל"פ פעיל נגדך. בקש ייעוץ משפטי מיידי מעורך דין המתמחה בחובות ודיני צרכנות.',
-        priority: 'urgent',
-        category: 'legal',
-        dueDate: new Date(today.getTime() + 3 * 24 * 60 * 60 * 1000),
-        status: 'pending',
-        estimatedHours: 2,
+  // Mutation to complete a task
+  const completeTaskMutation = (trpc.diagnosis as any).completeTask.useMutation({
+    onSuccess: (completedTaskId: string) => {
+      setCompletedTasks(prev => {
+        const newSet = new Set(prev);
+        newSet.add(completedTaskId);
+        return newSet;
       });
+    },
+  });
 
-      generatedTasks.push({
-        id: 'task-legal-response',
-        title: 'הגש תשובה להוצל"פ',
-        description:
-          'הגש תשובה רשמית להוצל"פ דרך עורך דין. זה חיוני כדי להגן על זכויותיך.',
-        priority: 'urgent',
-        category: 'legal',
-        dueDate: new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000),
-        status: 'pending',
-        estimatedHours: 3,
-      });
+  useEffect(() => {
+    if (generatedTasks) {
+      // Convert string dates to Date objects if needed
+      const tasksWithDates = generatedTasks.map((task: any) => ({
+        ...task,
+        dueDate: typeof task.dueDate === 'string' ? new Date(task.dueDate) : task.dueDate,
+      }));
+      setTasks(tasksWithDates);
     }
-
-    // Task 2: Warning letters response
-    if (diagnosis.hasWarningLetters) {
-      generatedTasks.push({
-        id: 'task-warning-response',
-        title: 'הגב על מכתבי התראה',
-        description:
-          'קבלת מכתבי התראה דורשת תגובה מהירה. בקש הנחה בריביות בתמורה לתוכנית פירעון.',
-        priority: 'high',
-        category: 'communication',
-        dueDate: new Date(today.getTime() + 5 * 24 * 60 * 60 * 1000),
-        status: 'pending',
-        estimatedHours: 2,
-      });
-    }
-
-    // Task 3: Contact creditors
-    const creditorCount = diagnosis.creditorCount || 0;
-    if (creditorCount > 0) {
-      generatedTasks.push({
-        id: 'task-creditor-contact',
-        title: `צור קשר עם ${creditorCount} נושים`,
-        description:
-          'צור קשר עם כל הנושים שלך. הציע להם תוכנית פירעון מובנית וממוקדת.',
-        priority: diagnosis.riskLevel === 'critical' ? 'urgent' : 'high',
-        category: 'communication',
-        dueDate: new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000),
-        status: 'pending',
-        estimatedHours: creditorCount * 0.5,
-      });
-
-      generatedTasks.push({
-        id: 'task-creditor-negotiation',
-        title: 'משא ומתן עם נושים',
-        description:
-          'בקש הנחה בריביות, הארכת תקופת פירעון, או הסדר חד פעמי. תיעד את כל התקשורה.',
-        priority: diagnosis.riskLevel === 'critical' ? 'urgent' : 'high',
-        category: 'negotiation',
-        dueDate: new Date(today.getTime() + 14 * 24 * 60 * 60 * 1000),
-        status: 'pending',
-        estimatedHours: creditorCount * 1,
-      });
-    }
-
-    // Task 4: Financial planning
-    if ((diagnosis.monthlyIncome || 0) > 0) {
-      const availableForDebt = (diagnosis.monthlyIncome || 0) - (diagnosis.monthlyExpenses || 0);
-
-      if (availableForDebt < 0) {
-        generatedTasks.push({
-          id: 'task-budget-reduction',
-          title: 'הקטן הוצאות חודשיות',
-          description:
-            'הוצאותיך גבוהות מהכנסתך. זהה הוצאות שניתן להקטין או לחסל.',
-          priority: 'urgent',
-          category: 'financial',
-          dueDate: new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000),
-          status: 'pending',
-          estimatedHours: 3,
-        });
-      } else if (availableForDebt < 1000) {
-        generatedTasks.push({
-          id: 'task-income-increase',
-          title: 'הגדל הכנסה חודשית',
-          description:
-            'הזמין הקצוב לחוב קטן מדי. חפש דרכים להגדיל את הכנסתך.',
-          priority: 'high',
-          category: 'financial',
-          dueDate: new Date(today.getTime() + 14 * 24 * 60 * 60 * 1000),
-          status: 'pending',
-          estimatedHours: 4,
-        });
-      }
-    }
-
-    // Task 5: Documentation
-    generatedTasks.push({
-      id: 'task-documentation-collect',
-      title: 'אסוף כל המסמכים הרלוונטיים',
-      description:
-        'אסוף: הודעות חוב, מכתבי התראה, הוצל"פ, הצהרות בנק, תלוש משכורת.',
-      priority: 'high',
-      category: 'documentation',
-      dueDate: new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000),
-      status: 'pending',
-      estimatedHours: 2,
-    });
-
-    // Task 6: Professional help
-    if (diagnosis.riskLevel === 'critical') {
-      generatedTasks.push({
-        id: 'task-professional-lawyer',
-        title: 'בקש ייעוץ מעורך דין',
-        description:
-          'מצבך קריטי. בקש ייעוץ מעורך דין המתמחה בחובות ודיני צרכנות.',
-        priority: 'urgent',
-        category: 'legal',
-        dueDate: new Date(today.getTime() + 3 * 24 * 60 * 60 * 1000),
-        status: 'pending',
-        estimatedHours: 1,
-      });
-    }
-
-    return generatedTasks;
-  }, [diagnosis]);
+  }, [generatedTasks]);
 
   const filteredTasks = filterPriority ? tasks.filter((t) => t.priority === filterPriority) : tasks;
 
@@ -208,6 +106,16 @@ export default function TasksSection({ diagnosis }: { diagnosis: DiagnosisData }
 
   const urgentCount = tasks.filter((t) => t.priority === 'urgent').length;
   const completedCount = completedTasks.size;
+
+  if (isLoading) {
+    return (
+      <Card className="bg-slate-800 border-slate-700">
+        <CardContent className="pt-6 text-center">
+          <p className="text-slate-400">טוען משימות...</p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -295,6 +203,7 @@ export default function TasksSection({ diagnosis }: { diagnosis: DiagnosisData }
                     const newCompleted = new Set(completedTasks);
                     if (checked) {
                       newCompleted.add(task.id);
+                      completeTaskMutation.mutate({ taskId: task.id });
                     } else {
                       newCompleted.delete(task.id);
                     }

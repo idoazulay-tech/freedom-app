@@ -315,6 +315,29 @@ export default function ProfessionalDiagnosis() {
             {/* Step 4: Summary */}
             {step === 4 && (
               <div className="space-y-4">
+                {/* Risk Level Badge */}
+                <div className={`rounded-lg p-4 space-y-2 ${
+                  formData.totalRisk > 150 ? 'bg-red-900/30 border border-red-600' :
+                  formData.totalRisk > 100 ? 'bg-orange-900/30 border border-orange-600' :
+                  formData.totalRisk > 50 ? 'bg-yellow-900/30 border border-yellow-600' :
+                  'bg-green-900/30 border border-green-600'
+                }`}>
+                  <p className="text-slate-400">רמת סיכון:</p>
+                  <div className="flex items-center gap-2">
+                    <span className={`px-3 py-1 rounded-full text-sm font-bold ${
+                      formData.totalRisk > 150 ? 'bg-red-600 text-white' :
+                      formData.totalRisk > 100 ? 'bg-orange-600 text-white' :
+                      formData.totalRisk > 50 ? 'bg-yellow-600 text-white' :
+                      'bg-green-600 text-white'
+                    }`}>
+                      {formData.totalRisk > 150 ? '🔴 קריטי' :
+                       formData.totalRisk > 100 ? '🟠 גבוה' :
+                       formData.totalRisk > 50 ? '🟡 בינוני' :
+                       '🟢 נמוך'}
+                    </span>
+                    <p className="text-white font-bold">{formData.totalRisk}/200</p>
+                  </div>
+                </div>
                 <div className="bg-slate-700 rounded-lg p-4 space-y-2">
                   <p className="text-slate-400">סכום כולל:</p>
                   <p className="text-2xl font-bold text-white">₪{formData.totalAmount.toLocaleString('he-IL')}</p>
@@ -338,14 +361,42 @@ export default function ProfessionalDiagnosis() {
                   </p>
                 </div>
                 <div className="flex gap-4">
-                  <div className="flex-1 bg-slate-700 rounded-lg p-4">
+                  <div className={`flex-1 rounded-lg p-4 border ${
+                    formData.hasEnforcement ? 'bg-red-900/30 border-red-600' : 'bg-green-900/30 border-green-600'
+                  }`}>
                     <p className="text-slate-400 text-sm">הוצל"פ פעיל:</p>
-                    <p className="text-lg font-bold text-white">{formData.hasEnforcement ? 'כן ⚠️' : 'לא ✓'}</p>
+                    <div className="flex items-center gap-2 mt-2">
+                      <span className={`px-2 py-1 rounded text-sm font-bold ${
+                        formData.hasEnforcement ? 'bg-red-600 text-white' : 'bg-green-600 text-white'
+                      }`}>
+                        {formData.hasEnforcement ? '🔴 כן' : '🟢 לא'}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex-1 bg-slate-700 rounded-lg p-4">
+                  <div className={`flex-1 rounded-lg p-4 border ${
+                    formData.hasWarningLetters ? 'bg-red-900/30 border-red-600' : 'bg-green-900/30 border-green-600'
+                  }`}>
                     <p className="text-slate-400 text-sm">מכתבי התראה:</p>
-                    <p className="text-lg font-bold text-white">{formData.hasWarningLetters ? 'כן ⚠️' : 'לא ✓'}</p>
+                    <div className="flex items-center gap-2 mt-2">
+                      <span className={`px-2 py-1 rounded text-sm font-bold ${
+                        formData.hasWarningLetters ? 'bg-red-600 text-white' : 'bg-green-600 text-white'
+                      }`}>
+                        {formData.hasWarningLetters ? '🔴 כן' : '🟢 לא'}
+                      </span>
+                    </div>
                   </div>
+                </div>
+
+                <div className="bg-blue-900/30 border border-blue-600 rounded-lg p-4">
+                  <p className="text-slate-400 text-sm mb-2">💡 המלצות:</p>
+                  <ul className="space-y-1 text-sm text-white">
+                    {formData.totalRisk > 150 && <li>• מצב קריטי - דרוש ייעוץ משפטי דחוף</li>}
+                    {formData.totalRisk > 100 && <li>• יש להתחיל משא ומתן עם נושים</li>}
+                    {formData.hasEnforcement && <li>• דרוש עו"ד להתמודדות עם הוצל"פ</li>}
+                    {formData.hasWarningLetters && <li>• יש להגיב על מכתבי התראה בהקדם</li>}
+                    {Math.max(0, formData.monthlyIncome - formData.monthlyExpenses) > 0 && <li>• אפשר להתחיל בפירעון חוב מיידי</li>}
+                    {Math.max(0, formData.monthlyIncome - formData.monthlyExpenses) === 0 && <li>• יש להקטין הוצאות או להגדיל הכנסה</li>}
+                  </ul>
                 </div>
               </div>
             )}
