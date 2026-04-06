@@ -9,7 +9,7 @@ import { ArrowRight } from 'lucide-react';
 import { useLocation } from 'wouter';
 
 interface FormData {
-  debts: Array<{ category: string; amount: number; riskScore: number }>;
+  debts: Array<{ category: string; amount: number; riskScore: number; creditorName?: string; caseNumber?: string; interestRate?: number; enforcementDate?: string }>;
   totalRisk: number;
   totalAmount: number;
   monthlyIncome: number;
@@ -67,8 +67,8 @@ export default function ProfessionalDiagnosis() {
         creditorCount: formData.debts.length,
         hasEnforcement: formData.hasEnforcement,
         hasWarningLetters: formData.hasWarningLetters,
-        debts: formData.debts,
-        actions: [],
+        debtsData: JSON.stringify(formData.debts),
+        actionsData: JSON.stringify([]),
       });
     } catch (error) {
       console.error('Error saving diagnosis:', error);
@@ -117,6 +117,12 @@ export default function ProfessionalDiagnosis() {
                     'משכנתא',
                     'חובות מס',
                     'חובות עירוניים',
+                    'חוב לעירייה',
+                    'חוב לביטוח לאומי',
+                    'חוב לספק חשמל/מים',
+                    'חוב לבנק ישראל',
+                    'חוב למגדל',
+                    'חוב לפקיד הגבייה',
                     'אחר'
                   ].map((category) => (
                     <button
@@ -156,6 +162,67 @@ export default function ProfessionalDiagnosis() {
                         <p className="text-blue-300 text-sm">סכום: ₪{formData.totalAmount.toLocaleString('he-IL')}</p>
                       </div>
                     )}
+                  </div>
+
+                  <div>
+                    <label className="text-white block mb-2">שם הנושה</label>
+                    <input
+                      type="text"
+                      placeholder="הקלד את שם הנושה"
+                      value={formData.debts[0]?.creditorName || ''}
+                      onChange={(e) => {
+                        const newDebts = [...formData.debts];
+                        if (newDebts[0]) newDebts[0].creditorName = e.target.value;
+                        setFormData({ ...formData, debts: newDebts });
+                      }}
+                      className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-white block mb-2">מספר תיק משפטי (אם קיים)</label>
+                    <input
+                      type="text"
+                      placeholder="מספר תיק"
+                      value={formData.debts[0]?.caseNumber || ''}
+                      onChange={(e) => {
+                        const newDebts = [...formData.debts];
+                        if (newDebts[0]) newDebts[0].caseNumber = e.target.value;
+                        setFormData({ ...formData, debts: newDebts });
+                      }}
+                      className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-white block mb-2">שיעור ריביות (%)</label>
+                    <input
+                      type="number"
+                      placeholder="שיעור ריביות"
+                      value={formData.debts[0]?.interestRate || ''}
+                      onChange={(e) => {
+                        const newDebts = [...formData.debts];
+                        if (newDebts[0]) newDebts[0].interestRate = Number(e.target.value);
+                        setFormData({ ...formData, debts: newDebts });
+                      }}
+                      className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400"
+                      min="0"
+                      max="100"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-white block mb-2">תאריך הוצל"פ (אם קיים)</label>
+                    <input
+                      type="date"
+                      value={formData.debts[0]?.enforcementDate || ''}
+                      onChange={(e) => {
+                        const newDebts = [...formData.debts];
+                        if (newDebts[0]) newDebts[0].enforcementDate = e.target.value;
+                        setFormData({ ...formData, debts: newDebts });
+                      }}
+                      className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400"
+                    />
                   </div>
 
                   <div>

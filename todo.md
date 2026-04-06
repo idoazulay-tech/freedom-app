@@ -354,3 +354,28 @@
 - [x] Test end-to-end flows
 - [ ] Performance testing
 - [ ] Security audit
+
+
+## 🔴 **Bugs Found in Questionnaire (from screenshots - Session 5)**
+
+### Step 2 - Debt Details (Missing Fields):
+- [ ] Add "Debt Type" dropdown (בנק, כרטיס, הלוואה, משכנתא, וכו')
+- [ ] Add "Creditor Name" text field (שם הנושה)
+- [ ] Add "Case Number" text field (מספר תיק משפטי)
+- [ ] Add "Interest Rate" number field (שיעור ריביות)
+- [ ] Add "Enforcement Date" date field (תאריך הוצל"פ אם יש)
+
+### Debt Categories (Missing Types):
+- [ ] Add "Municipality Debt" (חוב לעירייה)
+- [ ] Add "Tax Authority Debt" (חוב למס הכנסה)
+- [ ] Add "National Insurance Debt" (חוב לביטוח לאומי)
+- [ ] Add "Utilities Debt" (חוב לספק חשמל/מים)
+- [ ] Add "Bank of Israel Debt" (חוב לבנק ישראל)
+- [ ] Add "Magdal Debt" (חוב למגדל)
+- [ ] Add "Collection Agency Debt" (חוב לפקיד הגבייה)
+
+### Step 4 - Summary (Missing Displays):
+- [ ] Add "Enforcement Status" badge (סטטוס הוצל"פ - פעיל/לא פעיל)
+- [ ] Add "Warning Letters Status" badge (סטטוס מכתבים - יש/אין)
+- [ ] Add "Risk Level" badge with color (קריטי/גבוה/בינוני/נמוך)
+- [ ] Add "Summary Recommendations" text (סיכום המלצות)

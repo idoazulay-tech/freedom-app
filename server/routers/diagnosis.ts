@@ -88,8 +88,8 @@ export const diagnosisRouter = router({
         creditorCount: z.number(),
         hasEnforcement: z.boolean(),
         hasWarningLetters: z.boolean(),
-        debts: z.array(z.any()),
-        actions: z.array(z.any()),
+        debtsData: z.string(),
+        actionsData: z.string(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -109,8 +109,8 @@ export const diagnosisRouter = router({
           creditorCount: input.creditorCount,
           hasEnforcement: input.hasEnforcement,
           hasWarningLetters: input.hasWarningLetters,
-          debtsData: JSON.stringify(input.debts),
-          actionsData: JSON.stringify(input.actions),
+          debtsData: input.debtsData,
+          actionsData: input.actionsData,
         });
 
       return { success: true };
