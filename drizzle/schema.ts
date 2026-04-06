@@ -195,3 +195,65 @@ export const diagnoses = mysqlTable("diagnoses", {
 
 export type Diagnosis = typeof diagnoses.$inferSelect;
 export type InsertDiagnosis = typeof diagnoses.$inferInsert;
+
+
+// Expenses table - for tracking monthly expenses by category
+export const expenses = mysqlTable("expenses", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  categoryId: varchar("categoryId", { length: 100 }).notNull(), // From EXPENSE_CATEGORIES_42
+  categoryName: varchar("categoryName", { length: 255 }).notNull(),
+  categoryGroup: varchar("categoryGroup", { length: 100 }).notNull(), // Housing, Utilities, Food, etc.
+  amount: decimal("amount", { precision: 12, scale: 2 }).notNull(),
+  description: text("description"),
+  date: timestamp("date").notNull(),
+  isRecurring: boolean("isRecurring").default(false),
+  recurringFrequency: mysqlEnum("recurringFrequency", ["daily", "weekly", "biweekly", "monthly", "quarterly", "yearly"]),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Expense = typeof expenses.$inferSelect;
+export type InsertExpense = typeof expenses.$inferInsert;
+
+// Subscriptions table - for Free/Premium logic
+export const subscriptions = mysqlTable("subscriptions", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().unique(),
+  tier: mysqlEnum("tier", ["free", "premium"]).default("free").notNull(),
+  status: mysqlEnum("status", ["active", "inactive", "cancelled", "suspended"]).default("active").notNull(),
+  stripeCustomerId: varchar("stripeCustomerId", { length: 255 }),
+  stripeSubscriptionId: varchar("stripeSubscriptionId", { length: 255 }),
+  maxDebts: int("maxDebts").default(2), // Free = 2, Premium = unlimited
+  maxExpenseCategories: int("maxExpenseCategories").default(10), // Free = 10, Premium = 42
+  features: json("features"), // Array of enabled features
+  billingCycleStart: timestamp("billingCycleStart"),
+  billingCycleEnd: timestamp("billingCycleEnd"),
+  nextBillingDate: timestamp("nextBillingDate"),
+  cancelledAt: timestamp("cancelledAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Subscription = typeof subscriptions.$inferSelect;
+export type InsertSubscription = typeof subscriptions.$inferInsert;
+
+// Payment records table - for Stripe integration
+export const payments = mysqlTable("payments", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  subscriptionId: int("subscriptionId"),
+  stripePaymentIntentId: varchar("stripePaymentIntentId", { length: 255 }).unique(),
+  amount: decimal("amount", { precision: 12, scale: 2 }).notNull(),
+  currency: varchar("currency", { length: 3 }).default("ILS"),
+  status: mysqlEnum("status", ["pending", "succeeded", "failed", "cancelled", "refunded"]).notNull(),
+  paymentMethod: varchar("paymentMethod", { length: 100 }),
+  description: text("description"),
+  errorMessage: text("errorMessage"),
+  receiptUrl: text("receiptUrl"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type Payment = typeof payments.$inferSelect;
+export type InsertPayment = typeof payments.$inferInsert;

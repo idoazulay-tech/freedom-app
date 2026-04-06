@@ -183,3 +183,112 @@
 - [x] הוספת חובות עירוניים לקטגוריות
 - [x] עדכון ProfessionalDiagnosis עם קטגוריות חדשות
 - [x] בדיקה שהשינויים עובדים בממשק
+
+
+---
+
+## 🚀 **Phase 4: System Expansion - 42 Categories + 12 APIs + Stripe**
+
+### ✅ **חוקי עבודה קבועים (שמור בזיכרון!):**
+- [x] חוק #1: שמירת קונטקסט מלא - קרא את כל הקבצים
+- [x] חוק #2: אפס החסרות - אם כתוב 42 → תעשה 42
+- [x] חוק #3: דיווח שקוף - דווח מה סיימת + מה חסר + מה הולך לעשות
+- [x] חוק #4: בדיקת איכות - בדוק לפני כל תשובה
+- [x] חוק #5: שאלות הבהרה - אם לא ברור, שאל
+
+### Part 1: 42 Expense Categories
+- [ ] Create EXPENSES_42 constant with all categories
+- [ ] Add to database schema (expenses table)
+- [ ] Update UI to show all categories in dropdown
+- [ ] Add category icons (lucide-react)
+- [ ] Add category descriptions and tooltips
+- [ ] Implement category search/filter
+
+### Part 2: 12 APIs with JSON Schema & Error Handling
+- [ ] POST /api/debts/add (Add debt) - with schema validation
+- [ ] GET /api/debts/list (List debts) - with pagination
+- [ ] PUT /api/debts/:id (Update debt) - with validation
+- [ ] DELETE /api/debts/:id (Delete debt) - with soft delete
+- [ ] POST /api/expenses/add (Add expense) - with schema
+- [ ] GET /api/expenses/list (List expenses) - with filters
+- [ ] POST /api/diagnosis/perform (Run diagnosis) - AI analysis
+- [ ] GET /api/diagnosis/history (Get history) - with pagination
+- [ ] POST /api/professionals/match (Match professionals) - scoring
+- [ ] POST /api/payment-plan/generate (Generate plan) - calculations
+- [ ] POST /api/tasks/create (Create task) - automation
+- [ ] GET /api/tasks/list (List tasks) - with status
+
+### Part 3: Stripe Integration
+- [ ] Set up Stripe API keys in environment
+- [ ] Create payment intent endpoint (/api/payments/intent)
+- [ ] Create subscription endpoint (/api/subscriptions/create)
+- [ ] Add Stripe webhook handler (/api/webhooks/stripe)
+- [ ] Create payment UI component (PaymentForm)
+- [ ] Test payment flow end-to-end
+- [ ] Add error handling for failed payments
+- [ ] Implement retry logic for failed charges
+
+### Part 4: Free/Premium Logic
+- [ ] Create pricing model (free = 2 debts, premium = unlimited)
+- [ ] Add subscription check middleware
+- [ ] Limit free users to 2 debts maximum
+- [ ] Limit free users to basic features only
+- [ ] Create upgrade prompt component
+- [ ] Track subscription status in database
+- [ ] Implement subscription renewal logic
+- [ ] Add downgrade protection (keep data on downgrade)
+
+### Part 5: Mobile Responsive (< 600px)
+- [ ] Test on iPhone SE (375px)
+- [ ] Test on Android phones (360px-480px)
+- [ ] Fix layout issues on small screens
+- [ ] Add mobile navigation (hamburger menu)
+- [ ] Optimize touch targets (min 44px)
+- [ ] Test on iOS Safari and Chrome Android
+- [ ] Implement responsive typography
+- [ ] Test landscape orientation
+
+### Part 6: Testing (15 Checklist Items)
+- [ ] 42 categories visible in UI + stored in DB
+- [ ] All 12 APIs responding correctly
+- [ ] Mobile responsive on <600px screens
+- [ ] Offline localStorage support working
+- [ ] 0 console errors in browser
+- [ ] Free users limited to max 2 debts
+- [ ] Premium users have unlimited debts
+- [ ] Loading states on all screens
+- [ ] Error boundaries catching errors
+- [ ] Stripe payment flow working
+- [ ] Subscription renewal working
+- [ ] Data persistence across sessions
+- [ ] Page load performance < 2 seconds
+- [ ] Accessibility WCAG AA compliant
+- [ ] Cross-browser compatibility (Chrome, Firefox, Safari, Edge)
+
+### Part 7: Documentation & Export
+- [ ] Update FULL_EXPORT.md with new features
+- [ ] Create API documentation
+- [ ] Create user guide for free/premium
+- [ ] Document all 42 expense categories
+- [ ] Create deployment guide
+- [ ] Document Stripe integration
+- [ ] Create troubleshooting guide
+
+---
+
+## 📊 **Reporting Format (דיווח חובה):**
+```
+## ✅ סיימתי
+- [x] Feature 1
+- [x] Feature 2
+
+## ❌ חסר עדיין
+- [ ] Feature 3
+- [ ] Feature 4
+
+## ➡️ מתכנן לעשות
+1. Feature 5
+2. Feature 6
+
+⏱️ **זמן משוער:** X שעות
+```
