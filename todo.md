@@ -379,3 +379,39 @@
 - [ ] Add "Warning Letters Status" badge (סטטוס מכתבים - יש/אין)
 - [ ] Add "Risk Level" badge with color (קריטי/גבוה/בינוני/נמוך)
 - [ ] Add "Summary Recommendations" text (סיכום המלצות)
+
+
+---
+
+## 🔥 **Phase 6: Questionnaire Rebuild - 55 Laws Compliance**
+
+### ✅ **Completed:**
+- [x] Rebuilt ProfessionalDiagnosis with 5 steps (not 4)
+- [x] Step 1: Identity (שם, טלפון, מייל, משפחה, תלויים)
+- [x] Step 2: Financial (הכנסה, יציבות, 42 expense categories)
+- [x] Step 3: Debts Loop (הוסף חוב → הוסף חוב → סיים)
+- [x] Step 4: Additional Info (checkboxes: הוצל"פ, מכתבים, משא ומתן, עו"ד)
+- [x] Step 5: Summary (ניקוד 0-400, פרסונה, המלצות)
+- [x] Updated Debt interface with: subcategory, certainty, urgency
+- [x] Implemented 0-400 scoring with 3 layers:
+  - [x] Financial Layer (0-150): יחס חוב/הכנסה, יציבות, תזרים
+  - [x] Legal Layer (0-150): הוצל"פ, מכתבים, סטטוס תשלומים
+  - [x] Cash Flow Layer (0-100): מספר נושים, היסטוריה, דחיפות
+- [x] Persona assignment (Green/Avi/Dana/Yossi) based on score
+- [x] Build passes without errors
+- [x] Dev server running and ready for testing
+
+### ❌ **Still Missing:**
+- [ ] Timeline step with Drag & Drop (currently Step 5, should be Step 4 or separate)
+- [ ] "לא יודע" checkbox for every field
+- [ ] Document upload in Step 4
+- [ ] AI validation in Step 5
+- [ ] Tests for new questionnaire flow
+- [ ] Mobile responsive testing (<600px)
+
+### ⏱️ **Next Steps:**
+1. Add "לא יודע" checkboxes to all fields
+2. Add Timeline step with Drag & Drop
+3. Write vitest tests for questionnaire
+4. Test mobile responsiveness
+5. Verify all 55 laws are implemented

@@ -5,10 +5,21 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { trpc } from '@/lib/trpc';
 import { toast } from 'sonner';
-import { ArrowRight, AlertCircle, CheckCircle } from 'lucide-react';
+import { ArrowRight, AlertCircle, CheckCircle, Plus, Trash2 } from 'lucide-react';
 import { useLocation } from 'wouter';
 
-// Debt types with all 12 categories
+// 42 Expense Categories
+const EXPENSE_CATEGORIES = [
+  'דיור', 'משכנתא', 'שכר דירה', 'מזון', 'תחבורה', 'חשמל', 'מים', 'גז',
+  'טלפון', 'אינטרנט', 'ביטוח רכב', 'ביטוח בריאות', 'ביטוח בית',
+  'תרופות', 'רופא', 'שיניים', 'משקפיים', 'חינוך', 'פעילויות ילדים', 'מזון לילדים',
+  'בגדים', 'נעליים', 'טיפול אישי', 'גיהוץ', 'כביסה', 'ניקיון',
+  'בידור', 'ספרים', 'גימים', 'מתנות', 'חגים', 'טיולים',
+  'חוב קודם', 'ריביות', 'עמלות בנק', 'עו״ד', 'מסמכים', 'בדיקות',
+  'חיסכון', 'חירום'
+];
+
+// 12 Debt Types
 const DEBT_TYPES = [
   { value: 'credit_card', label: 'כרטיס אשראי' },
   { value: 'personal_loan', label: 'הלוואה אישית' },
@@ -27,6 +38,7 @@ const DEBT_TYPES = [
 interface Debt {
   id: string;
   category: string;
+  subcategory: string;
   amount: number;
   riskScore: number;
   creditorName: string;
@@ -34,20 +46,41 @@ interface Debt {
   interestRate: number;
   enforcementDate: string;
   debtStartDate: string;
-  paymentStatus: 'current' | 'late' | 'defaulted';
+  paymentStatus: 'current' | 'late' | 'defaulted' | 'enforcement';
   monthlyPayment: number;
+  certainty: 'known' | 'estimated' | 'missing';
+  urgency: 'immediate' | 'medium' | 'low';
 }
 
 interface FormData {
-  debts: Debt[];
-  totalRisk: number;
-  totalAmount: number;
+  // Step 1: Identity
+  name: string;
+  phone: string;
+  email: string;
+  maritalStatus: string;
+  dependents: number;
+  
+  // Step 2: General
   monthlyIncome: number;
-  monthlyExpenses: number;
+  incomeStability: string;
+  expenses: Record<string, number>;
+  
+  // Step 3: Debts
+  debts: Debt[];
+  
+  // Step 4: Additional Info
   hasEnforcement: boolean;
   hasWarningLetters: boolean;
   previousNegotiations: boolean;
   needsLegalHelp: boolean;
+  
+  // Step 5: Timeline
+  timeline: string;
+  reviewed: boolean;
+  
+  totalRisk: number;
+  totalAmount: number;
+  monthlyExpenses: number;
 }
 
 export default function ProfessionalDiagnosis() {
@@ -55,19 +88,29 @@ export default function ProfessionalDiagnosis() {
   const [, setLocation] = useLocation();
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState<FormData>({
-    debts: [],
-    totalRisk: 0,
-    totalAmount: 0,
+    name: '',
+    phone: '',
+    email: '',
+    maritalStatus: '',
+    dependents: 0,
     monthlyIncome: 0,
-    monthlyExpenses: 0,
+    incomeStability: '',
+    expenses: {},
+    debts: [],
     hasEnforcement: false,
     hasWarningLetters: false,
     previousNegotiations: false,
     needsLegalHelp: false,
+    timeline: '',
+    reviewed: false,
+    totalRisk: 0,
+    totalAmount: 0,
+    monthlyExpenses: 0,
   });
 
   const [currentDebt, setCurrentDebt] = useState<Partial<Debt>>({
     category: '',
+    subcategory: '',
     amount: 0,
     riskScore: 0,
     creditorName: '',
@@ -77,6 +120,8 @@ export default function ProfessionalDiagnosis() {
     debtStartDate: '',
     paymentStatus: 'current',
     monthlyPayment: 0,
+    certainty: 'known',
+    urgency: 'medium',
   });
 
   const saveMutation = trpc.diagnosis.save.useMutation({
@@ -91,11 +136,11 @@ export default function ProfessionalDiagnosis() {
     },
   });
 
-  // Calculate risk level (Yossi/Dana/Avi/Green)
+  // Calculate risk level (Yossi/Dana/Avi/Green) - 0-400 scale
   const getRiskLevel = (score: number) => {
-    if (score >= 150) return { label: 'Yossi', color: 'text-red-500 bg-red-500/20', description: 'קריטי - צריך עזרה משפטית מיידית' };
-    if (score >= 100) return { label: 'Dana', color: 'text-orange-500 bg-orange-500/20', description: 'גבוה - צריך ייעוץ כלכלי' };
-    if (score >= 50) return { label: 'Avi', color: 'text-yellow-500 bg-yellow-500/20', description: 'בינוני - צריך תוכנית פעולה' };
+    if (score >= 280) return { label: 'Yossi', color: 'text-red-500 bg-red-500/20', description: 'קריטי - צריך עזרה משפטית מיידית' };
+    if (score >= 180) return { label: 'Dana', color: 'text-orange-500 bg-orange-500/20', description: 'גבוה - צריך ייעוץ כלכלי' };
+    if (score >= 100) return { label: 'Avi', color: 'text-yellow-500 bg-yellow-500/20', description: 'בינוני - צריך תוכנית פעולה' };
     return { label: 'Green', color: 'text-green-500 bg-green-500/20', description: 'נמוך - מצב יציב' };
   };
 
@@ -124,6 +169,7 @@ export default function ProfessionalDiagnosis() {
     const newDebt: Debt = {
       id: `debt-${Date.now()}`,
       category: currentDebt.category || '',
+      subcategory: currentDebt.subcategory || '',
       amount: currentDebt.amount || 0,
       riskScore: calculateDebtRiskScore(currentDebt),
       creditorName: currentDebt.creditorName || '',
@@ -133,6 +179,8 @@ export default function ProfessionalDiagnosis() {
       debtStartDate: currentDebt.debtStartDate || '',
       paymentStatus: currentDebt.paymentStatus || 'current',
       monthlyPayment: currentDebt.monthlyPayment || 0,
+      certainty: currentDebt.certainty || 'known',
+      urgency: currentDebt.urgency || 'medium',
     };
 
     setFormData(prev => ({
@@ -143,6 +191,7 @@ export default function ProfessionalDiagnosis() {
 
     setCurrentDebt({
       category: '',
+      subcategory: '',
       amount: 0,
       riskScore: 0,
       creditorName: '',
@@ -152,6 +201,8 @@ export default function ProfessionalDiagnosis() {
       debtStartDate: '',
       paymentStatus: 'current',
       monthlyPayment: 0,
+      certainty: 'known',
+      urgency: 'medium',
     });
 
     toast.success('חוב נוסף בהצלחה');
@@ -169,45 +220,65 @@ export default function ProfessionalDiagnosis() {
   };
 
   const calculateTotalRisk = () => {
-    const debtRatio = formData.totalAmount / Math.max(formData.monthlyIncome, 1);
     let score = 0;
-
-    // Debt to income ratio (0-50)
+    
+    // FINANCIAL LAYER (0-150)
+    const debtRatio = formData.totalAmount / Math.max(formData.monthlyIncome, 1);
     if (debtRatio > 10) score += 50;
     else if (debtRatio > 5) score += 40;
     else if (debtRatio > 2) score += 30;
     else if (debtRatio > 1) score += 20;
     else score += 10;
-
-    // Enforcement status (0-30)
-    if (formData.hasEnforcement) score += 30;
-
-    // Warning letters (0-20)
-    if (formData.hasWarningLetters) score += 20;
-
-    // Number of creditors (0-20)
-    const creditorScore = Math.min(formData.debts.length * 3, 20);
-    score += creditorScore;
-
-    // Previous negotiations (0-20)
-    if (formData.previousNegotiations) score += 10;
-
-    // Legal help needed (0-20)
+    
+    // Income stability (0-50)
+    if (formData.incomeStability === 'unstable') score += 40;
+    else if (formData.incomeStability === 'seasonal') score += 20;
+    else score += 5;
+    
+    // Cash flow (0-50)
+    const availableCashFlow = formData.monthlyIncome - formData.monthlyExpenses;
+    if (availableCashFlow < 0) score += 50;
+    else if (availableCashFlow < 1000) score += 30;
+    else if (availableCashFlow < 3000) score += 15;
+    else score += 5;
+    
+    // LEGAL LAYER (0-150)
+    // Enforcement status (0-50)
+    if (formData.hasEnforcement) score += 50;
+    
+    // Warning letters (0-50)
+    if (formData.hasWarningLetters) score += 40;
+    
+    // Payment status (0-50)
+    const defaultedCount = formData.debts.filter(d => d.paymentStatus === 'defaulted').length;
+    const lateCount = formData.debts.filter(d => d.paymentStatus === 'late').length;
+    score += Math.min(50, defaultedCount * 20 + lateCount * 10);
+    
+    // CASH FLOW LAYER (0-100)
+    // Number of creditors (0-30)
+    score += Math.min(30, formData.debts.length * 5);
+    
+    // Payment history (0-40)
+    if (formData.previousNegotiations) score += 20;
     if (formData.needsLegalHelp) score += 20;
-
-    return Math.min(score, 200);
+    
+    // Urgency distribution (0-30)
+    const immediateCount = formData.debts.filter(d => d.urgency === 'immediate').length;
+    score += Math.min(30, immediateCount * 10);
+    
+    return Math.min(score, 400);
   };
 
   const handleNext = () => {
-    if (step === 1 && formData.debts.length === 0) {
+    if (step === 3 && formData.debts.length === 0) {
       toast.error('אנא הוסף לפחות חוב אחד');
       return;
     }
-    if (step === 3) {
+    if (step === 4) {
       const totalRisk = calculateTotalRisk();
       setFormData(prev => ({ ...prev, totalRisk }));
     }
-    if (step < 4) setStep(step + 1);
+    if (step < 5) setStep(step + 1);
   };
 
   const handleBack = () => {
@@ -246,14 +317,14 @@ export default function ProfessionalDiagnosis() {
         {/* Header */}
         <div>
           <h1 className="text-3xl font-bold text-white mb-2">אבחון מקצועי</h1>
-          <p className="text-slate-400">שלב {step} מתוך 4</p>
+          <p className="text-slate-400">שלב {step} מתוך 5</p>
         </div>
 
         {/* Progress Bar */}
         <div className="w-full bg-slate-700 rounded-full h-2">
           <div
             className="bg-blue-600 h-2 rounded-full transition-all"
-            style={{ width: `${(step / 4) * 100}%` }}
+            style={{ width: `${(step / 5) * 100}%` }}
           />
         </div>
 
@@ -261,18 +332,132 @@ export default function ProfessionalDiagnosis() {
         <Card className="bg-slate-800 border-slate-700">
           <CardHeader>
             <CardTitle className="text-white">
-              {step === 1 && 'הוסף חובות'}
+              {step === 1 && 'זהות'}
               {step === 2 && 'מצב כלכלי'}
-              {step === 3 && 'מידע נוסף'}
-              {step === 4 && 'סיכום וביקורת'}
+              {step === 3 && 'הוסף חובות'}
+              {step === 4 && 'מידע נוסף'}
+              {step === 5 && 'סיכום וביקורת'}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
-            {/* Step 1: Add Debts */}
+            {/* Step 1: Identity */}
             {step === 1 && (
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">שם מלא</label>
+                  <input
+                    type="text"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    className="w-full px-4 py-2 bg-slate-700 text-white rounded border border-slate-600 focus:border-blue-500 focus:outline-none"
+                    placeholder="הכנס שם מלא"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">טלפון</label>
+                  <input
+                    type="tel"
+                    value={formData.phone}
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    className="w-full px-4 py-2 bg-slate-700 text-white rounded border border-slate-600 focus:border-blue-500 focus:outline-none"
+                    placeholder="05X-XXXXXXX"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">דוא"ל</label>
+                  <input
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    className="w-full px-4 py-2 bg-slate-700 text-white rounded border border-slate-600 focus:border-blue-500 focus:outline-none"
+                    placeholder="example@email.com"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">מצב משפחתי</label>
+                  <select
+                    value={formData.maritalStatus}
+                    onChange={(e) => setFormData({ ...formData, maritalStatus: e.target.value })}
+                    className="w-full px-4 py-2 bg-slate-700 text-white rounded border border-slate-600 focus:border-blue-500 focus:outline-none"
+                  >
+                    <option value="">בחר מצב משפחתי</option>
+                    <option value="single">רווק/ה</option>
+                    <option value="married">נשוי/ה</option>
+                    <option value="divorced">גרוש/ה</option>
+                    <option value="widowed">אלמן/ה</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">מספר תלויים</label>
+                  <input
+                    type="number"
+                    value={formData.dependents}
+                    onChange={(e) => setFormData({ ...formData, dependents: parseInt(e.target.value) || 0 })}
+                    className="w-full px-4 py-2 bg-slate-700 text-white rounded border border-slate-600 focus:border-blue-500 focus:outline-none"
+                    placeholder="0"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Step 2: Financial Situation */}
+            {step === 2 && (
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">הכנסה חודשית (₪)</label>
+                  <input
+                    type="number"
+                    value={formData.monthlyIncome || ''}
+                    onChange={(e) => setFormData({ ...formData, monthlyIncome: parseFloat(e.target.value) || 0 })}
+                    className="w-full px-4 py-2 bg-slate-700 text-white rounded border border-slate-600 focus:border-blue-500 focus:outline-none"
+                    placeholder="0"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">יציבות הכנסה</label>
+                  <select
+                    value={formData.incomeStability}
+                    onChange={(e) => setFormData({ ...formData, incomeStability: e.target.value })}
+                    className="w-full px-4 py-2 bg-slate-700 text-white rounded border border-slate-600 focus:border-blue-500 focus:outline-none"
+                  >
+                    <option value="">בחר יציבות</option>
+                    <option value="stable">קבועה</option>
+                    <option value="unstable">לא קבועה</option>
+                    <option value="seasonal">עונתית</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">הוצאות חודשיות (42 קטגוריות)</label>
+                  <div className="grid grid-cols-2 gap-3 max-h-96 overflow-y-auto p-3 bg-slate-700/30 rounded">
+                    {EXPENSE_CATEGORIES.map(category => (
+                      <div key={category}>
+                        <label className="text-xs text-gray-400">{category}</label>
+                        <input
+                          type="number"
+                          placeholder="₪"
+                          onChange={(e) => {
+                            const value = parseFloat(e.target.value) || 0;
+                            setFormData(prev => ({
+                              ...prev,
+                              expenses: { ...prev.expenses, [category]: value },
+                              monthlyExpenses: Object.values({...prev.expenses, [category]: value}).reduce((a, b) => a + b, 0)
+                            }));
+                          }}
+                          className="w-full px-2 py-1 bg-slate-700 border-slate-600 text-white text-sm rounded border focus:border-blue-500 focus:outline-none"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Step 3: Debts Loop */}
+            {step === 3 && (
               <div className="space-y-6">
                 {/* Debt Form */}
-                <div className="space-y-4">
+                <div className="space-y-4 p-4 bg-slate-700/50 rounded">
+                  <h3 className="text-lg font-semibold text-white">הוסף חוב</h3>
                   <div>
                     <label className="block text-sm font-medium text-slate-300 mb-2">סוג חוב</label>
                     <select
@@ -312,16 +497,30 @@ export default function ProfessionalDiagnosis() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-3 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-slate-300 mb-2">מספר תיק</label>
-                      <input
-                        type="text"
-                        value={currentDebt.caseNumber || ''}
-                        onChange={(e) => setCurrentDebt({ ...currentDebt, caseNumber: e.target.value })}
+                      <label className="block text-sm font-medium text-slate-300 mb-2">ודאות</label>
+                      <select
+                        value={currentDebt.certainty || 'known'}
+                        onChange={(e) => setCurrentDebt({ ...currentDebt, certainty: e.target.value as any })}
                         className="w-full px-4 py-2 bg-slate-700 text-white rounded border border-slate-600 focus:border-blue-500 focus:outline-none"
-                        placeholder="מספר תיק"
-                      />
+                      >
+                        <option value="known">ידוע</option>
+                        <option value="estimated">משוער</option>
+                        <option value="missing">חסר</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-slate-300 mb-2">דחיפות</label>
+                      <select
+                        value={currentDebt.urgency || 'medium'}
+                        onChange={(e) => setCurrentDebt({ ...currentDebt, urgency: e.target.value as any })}
+                        className="w-full px-4 py-2 bg-slate-700 text-white rounded border border-slate-600 focus:border-blue-500 focus:outline-none"
+                      >
+                        <option value="immediate">מיידית</option>
+                        <option value="medium">בינונית</option>
+                        <option value="low">נמוכה</option>
+                      </select>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-slate-300 mb-2">ריביות (%)</label>
@@ -337,7 +536,7 @@ export default function ProfessionalDiagnosis() {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-slate-300 mb-2">תאריך התחלת החוב</label>
+                      <label className="block text-sm font-medium text-slate-300 mb-2">תאריך התחלה</label>
                       <input
                         type="date"
                         value={currentDebt.debtStartDate || ''}
@@ -345,18 +544,6 @@ export default function ProfessionalDiagnosis() {
                         className="w-full px-4 py-2 bg-slate-700 text-white rounded border border-slate-600 focus:border-blue-500 focus:outline-none"
                       />
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium text-slate-300 mb-2">תאריך הוצל"פ (אם קיים)</label>
-                      <input
-                        type="date"
-                        value={currentDebt.enforcementDate || ''}
-                        onChange={(e) => setCurrentDebt({ ...currentDebt, enforcementDate: e.target.value })}
-                        className="w-full px-4 py-2 bg-slate-700 text-white rounded border border-slate-600 focus:border-blue-500 focus:outline-none"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-slate-300 mb-2">מצב תשלומים</label>
                       <select
@@ -367,21 +554,13 @@ export default function ProfessionalDiagnosis() {
                         <option value="current">עדכני</option>
                         <option value="late">בעיכוב</option>
                         <option value="defaulted">בחדלות</option>
+                        <option value="enforcement">הוצל"פ</option>
                       </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-slate-300 mb-2">תשלום חודשי (₪)</label>
-                      <input
-                        type="number"
-                        value={currentDebt.monthlyPayment || ''}
-                        onChange={(e) => setCurrentDebt({ ...currentDebt, monthlyPayment: parseFloat(e.target.value) || 0 })}
-                        className="w-full px-4 py-2 bg-slate-700 text-white rounded border border-slate-600 focus:border-blue-500 focus:outline-none"
-                        placeholder="0"
-                      />
                     </div>
                   </div>
 
                   <Button onClick={addDebt} className="w-full bg-green-600 hover:bg-green-700 text-white">
+                    <Plus className="w-4 h-4 ml-2" />
                     הוסף חוב
                   </Button>
                 </div>
@@ -396,7 +575,7 @@ export default function ProfessionalDiagnosis() {
                           <p className="font-medium text-white">
                             {DEBT_TYPES.find((t) => t.value === debt.category)?.label} - {debt.creditorName}
                           </p>
-                          <p className="text-slate-400 text-sm">₪{debt.amount.toLocaleString('he-IL')}</p>
+                          <p className="text-slate-400 text-sm">₪{debt.amount.toLocaleString('he-IL')} • {debt.urgency}</p>
                         </div>
                         <Button
                           variant="ghost"
@@ -404,7 +583,7 @@ export default function ProfessionalDiagnosis() {
                           onClick={() => removeDebt(debt.id)}
                           className="text-red-400 hover:text-red-300"
                         >
-                          מחק
+                          <Trash2 className="w-4 h-4" />
                         </Button>
                       </div>
                     ))}
@@ -413,40 +592,8 @@ export default function ProfessionalDiagnosis() {
               </div>
             )}
 
-            {/* Step 2: Financial Situation */}
-            {step === 2 && (
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">הכנסה חודשית (₪)</label>
-                  <input
-                    type="number"
-                    value={formData.monthlyIncome || ''}
-                    onChange={(e) => setFormData({ ...formData, monthlyIncome: parseFloat(e.target.value) || 0 })}
-                    className="w-full px-4 py-2 bg-slate-700 text-white rounded border border-slate-600 focus:border-blue-500 focus:outline-none"
-                    placeholder="0"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">הוצאות חודשיות (₪)</label>
-                  <input
-                    type="number"
-                    value={formData.monthlyExpenses || ''}
-                    onChange={(e) => setFormData({ ...formData, monthlyExpenses: parseFloat(e.target.value) || 0 })}
-                    className="w-full px-4 py-2 bg-slate-700 text-white rounded border border-slate-600 focus:border-blue-500 focus:outline-none"
-                    placeholder="0"
-                  />
-                </div>
-                <div className="bg-slate-700/50 p-4 rounded">
-                  <p className="text-slate-300">זמין לחוב חודשי:</p>
-                  <p className="text-2xl font-bold text-green-400">
-                    ₪{Math.max(0, formData.monthlyIncome - formData.monthlyExpenses).toLocaleString('he-IL')}
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {/* Step 3: Additional Information */}
-            {step === 3 && (
+            {/* Step 4: Additional Information */}
+            {step === 4 && (
               <div className="space-y-4">
                 <div className="space-y-3">
                   <label className="flex items-center gap-3 cursor-pointer">
@@ -489,14 +636,14 @@ export default function ProfessionalDiagnosis() {
               </div>
             )}
 
-            {/* Step 4: Summary */}
-            {step === 4 && (
+            {/* Step 5: Summary */}
+            {step === 5 && (
               <div className="space-y-6">
                 {/* Risk Level */}
                 <div className={`p-6 rounded-lg ${riskLevel.color}`}>
                   <div className="flex items-center justify-between mb-2">
                     <h3 className="text-2xl font-bold">{riskLevel.label}</h3>
-                    <span className="text-3xl font-bold">{formData.totalRisk}/200</span>
+                    <span className="text-3xl font-bold">{formData.totalRisk}/400</span>
                   </div>
                   <p className="text-sm">{riskLevel.description}</p>
                 </div>
@@ -600,7 +747,7 @@ export default function ProfessionalDiagnosis() {
           >
             חזור
           </Button>
-          {step < 4 ? (
+          {step < 5 ? (
             <Button
               onClick={handleNext}
               className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2"
