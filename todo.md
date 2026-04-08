@@ -415,3 +415,78 @@
 3. Write vitest tests for questionnaire
 4. Test mobile responsiveness
 5. Verify all 55 laws are implemented
+
+---
+
+## 🔴 **Phase 7: UX/UI Fixes - Comprehensive Overhaul (Session 6)**
+
+### שלב 1 - זהות (Identity) - 20%
+- [ ] הסר placeholder text "שם מלא" - תן input ריק
+- [ ] תקן placeholder טלפון - "05X-XXXXXXX" → "050-1234567"
+- [ ] תקן placeholder אימייל - "example@email.com" → "user@example.com"
+- [ ] תקן label "בחר מצב משפחתי" - צריך להיות "מצב משפחתי"
+- [ ] שנה "מספר כלים" ל-"מספר בני משפחה" או "מספר תלויים"
+- [ ] הוסף validation messages בזמן real-time
+- [ ] הוסף error messages בעת שליחה
+
+### שלב 2 - מצב כלכלי (Financial) - 40%
+- [ ] הסר את שדות סוג החוב - זה בשלב 3!
+- [ ] הסר את שדה "שם הנושה" - זה בשלב 3!
+- [ ] צמצם ל-3 שדות חובה בלבד: הכנסה, הוצאות קבועות, הוצאות משתנות
+- [ ] העבר שדות אופציונליים לטאבים נפרדים או collapse
+- [ ] תקן "יידוע" ל-"ידוע"
+- [ ] הוסף help text לכל שדה
+- [ ] סדר שדות לוגית: הכנסה → הוצאות קבועות → הוצאות משתנות
+- [ ] הוסף validation messages
+
+### שלב 3 - הוסף חובות (Add Debts) - 60%
+- [ ] שפר את הכפתורים של סוגי החוב - הוסף visual feedback
+- [ ] תקן label "שם הנושה" - צריך להיות ברור שזה שם הנושה
+- [ ] הוסף validation messages
+- [ ] הוסף "Clear" button לניקוי הטופס
+- [ ] הוסף "Edit" button לעריכת חוב שנוסף
+- [ ] הוסף "Delete" button לחוב שנוסף
+- [ ] תקן "חובות שנוספו (1)" ל-"רשימת החובות (1)"
+- [ ] הוסף visual indicator לחוב שנבחר
+
+### שלב 4 - מידע נוסף (Additional Info) - 80%
+- [ ] הוסף help text לכל checkbox
+- [ ] תקן labels - הוסף הסבר קצר
+- [ ] הוסף "Skip" button או "Not Applicable" option
+- [ ] שפר את ה-UX של checkboxes
+
+### שלב 5 - סיכום (Summary) - 100%
+- [ ] תקן את ה-score formatting - "260.159..." → "77.5/400"
+- [ ] תקן את ה-persona - "Dana" → "Green/Red/Yellow"
+- [ ] הוסף סיכום של כל הנתונים שהוזנו
+- [ ] תקן את ה-CTA - "סיים אבחון" → "סיים אבחון וצור פרופיל"
+- [ ] הוסף "Edit" button לחזרה לשלבים קודמים
+
+### בעיות כלליות בכל האיבחון
+- [ ] הוסף progress bar ברור
+- [ ] הוסף "Back" button בכל שלב
+- [ ] הוסף "Save Draft" button
+- [ ] הוסף "Help" button
+- [ ] הוסף "Cancel" button
+- [ ] הוסף proper spacing בין שדות
+- [ ] הוסף color coding לשדות חובה
+- [ ] הוסף icons לשדות
+- [ ] הוסף visual hierarchy
+- [ ] הוסף aria-labels ל-accessibility
+- [ ] הוסף keyboard navigation support
+- [ ] הוסף focus indicators
+
+### פרופיל (Profile)
+- [ ] תקן "יחס חוב/הכנסה" ל-"יחס חוב לשנתי הכנסה"
+- [ ] תקן "הוצאות פעיל" ל-"הוצאות קבועות"
+- [ ] תקן "סיכום משפטי" ל-"סטטוס משפטי"
+- [ ] תקן "credit_card" ל-"כרטיס אשראי"
+- [ ] הוסף "Edit Profile" button
+- [ ] שפר את ה-formatting של כל הנתונים
+
+### בדיקות
+- [ ] בדוק end-to-end flow
+- [ ] בדוק validation messages
+- [ ] בדוק accessibility
+- [ ] בדוק responsive design
+- [ ] בדוק keyboard navigation

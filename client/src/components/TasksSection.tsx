@@ -41,7 +41,7 @@ export default function TasksSection({ diagnosis }: { diagnosis?: DiagnosisData 
   }, []);
 
   // Mutation to complete a task
-  const completeTaskMutation = (trpc.diagnosis as any).completeTask.useMutation();
+  const completeTaskMutation = ((trpc.diagnosis as any).completeTask?.useMutation?.() || { mutate: () => {} });
 
   useEffect(() => {
     if (generatedTasksData && Array.isArray(generatedTasksData)) {
@@ -56,13 +56,7 @@ export default function TasksSection({ diagnosis }: { diagnosis?: DiagnosisData 
 
   const filteredTasks = filterPriority ? tasks.filter((t) => t.priority === filterPriority) : tasks;
   
-  if (isPending || !tasks || tasks.length === 0) {
-    return (
-      <Card className="bg-slate-800 border-slate-700">
-        <CardContent className="p-8 text-center text-slate-300">טוען משימות...</CardContent>
-      </Card>
-    );
-  }
+
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
