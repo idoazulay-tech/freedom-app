@@ -32,39 +32,44 @@ export default function TasksSection({ diagnosis }: { diagnosis: DiagnosisData }
   const [completedTasks, setCompletedTasks] = useState<Set<string>>(new Set());
   const [tasks, setTasks] = useState<Task[]>([]);
 
-  // Fetch generated tasks from server
-  const { data: generatedTasks, isLoading } = (trpc.diagnosis as any).generateTasks.useQuery({
-    hasEnforcement: diagnosis.hasEnforcement || false,
-    hasWarningLetters: diagnosis.hasWarningLetters || false,
-    creditorCount: diagnosis.creditorCount || 0,
-    totalDebt: diagnosis.totalDebt,
-    availableForDebt: Math.max(0, (diagnosis.monthlyIncome || 0) - (diagnosis.monthlyExpenses || 0)),
-    riskLevel: diagnosis.riskLevel,
-  });
+  // Fetch generated tasks from server (server generates based on stored diagnosis)
+  const { data: generatedTasks, isPending } = (trpc.diagnosis as any).generateTasks.useMutation();
+  
+  // Generate tasks on mount
+  useEffect(() => {
+    if (!generatedTasks.data) {
+      generatedTasks.mutate();
+    }
+  }, []);
 
   // Mutation to complete a task
   const completeTaskMutation = (trpc.diagnosis as any).completeTask.useMutation({
-    onSuccess: (completedTaskId: string) => {
-      setCompletedTasks(prev => {
-        const newSet = new Set(prev);
-        newSet.add(completedTaskId);
-        return newSet;
-      });
+    onSuccess: () => {
+      // Refresh tasks after completion
+      generatedTasks.mutate();
     },
   });
 
   useEffect(() => {
-    if (generatedTasks) {
+    if (generatedTasks.data) {
       // Convert string dates to Date objects if needed
-      const tasksWithDates = generatedTasks.map((task: any) => ({
+      const tasksWithDates = generatedTasks.data.map((task: any) => ({
         ...task,
         dueDate: typeof task.dueDate === 'string' ? new Date(task.dueDate) : task.dueDate,
       }));
       setTasks(tasksWithDates);
     }
-  }, [generatedTasks]);
+  }, [generatedTasks.data]);
 
   const filteredTasks = filterPriority ? tasks.filter((t) => t.priority === filterPriority) : tasks;
+  
+  if (isPending) {
+    return (
+      <Card className="bg-slate-800 border-slate-700">
+        <CardContent className="p-8 text-center text-slate-300">טוען משימות...</CardContent>
+      </Card>
+    );
+  }
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
@@ -107,7 +112,7 @@ export default function TasksSection({ diagnosis }: { diagnosis: DiagnosisData }
   const urgentCount = tasks.filter((t) => t.priority === 'urgent').length;
   const completedCount = completedTasks.size;
 
-  if (isLoading) {
+  if (isPending || tasks.length === 0) {
     return (
       <Card className="bg-slate-800 border-slate-700">
         <CardContent className="pt-6 text-center">

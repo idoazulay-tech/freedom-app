@@ -40,7 +40,7 @@ export default function Profile() {
   const [debts, setDebts] = useState<Debt[]>([]);
   const [actions, setActions] = useState<any[]>([]);
 
-   const { data: diagnosis, isLoading } = trpc.diagnosis.getMine.useQuery();
+  const { data: diagnosis, isLoading } = trpc.diagnosis.getMine.useQuery();
 
   useEffect(() => {
     if (diagnosis) {
@@ -59,8 +59,19 @@ export default function Profile() {
     }
   }, [diagnosis]);
 
+  // Map new persona labels to old risk level names for compatibility
+  const mapPersonaToRiskLevel = (persona: string): string => {
+    const normalized = persona?.toLowerCase();
+    if (normalized === 'yossi') return 'critical';
+    if (normalized === 'dana') return 'high';
+    if (normalized === 'avi') return 'medium';
+    if (normalized === 'green') return 'low';
+    return normalized || 'medium';
+  };
+
   const getRiskColor = (level: string) => {
-    switch (level?.toLowerCase()) {
+    const normalized = mapPersonaToRiskLevel(level);
+    switch (normalized) {
       case 'critical':
         return 'bg-red-500/20 text-red-700 border-red-500/30';
       case 'high':
@@ -75,7 +86,8 @@ export default function Profile() {
   };
 
   const getRiskIcon = (level: string) => {
-    switch (level?.toLowerCase()) {
+    const normalized = mapPersonaToRiskLevel(level);
+    switch (normalized) {
       case 'critical':
       case 'high':
         return <AlertCircle className="w-5 h-5" />;
@@ -88,7 +100,24 @@ export default function Profile() {
     }
   };
 
-  if (isLoading || !diagnosis) {
+  const getRiskDescription = (level: string): string => {
+    const normalized = level?.toLowerCase();
+    if (normalized === 'yossi') return 'סיכון קריטי - דחוף!';
+    if (normalized === 'dana') return 'סיכון גבוה - דרוש פעולה';
+    if (normalized === 'avi') return 'סיכון בינוני - יש זמן';
+    if (normalized === 'green') return 'סיכון נמוך - יציב';
+    
+    // Fallback for old format
+    switch (normalized) {
+      case 'critical': return 'סיכון קריטי - דחוף!';
+      case 'high': return 'סיכון גבוה - דרוש פעולה';
+      case 'medium': return 'סיכון בינוני - יש זמן';
+      case 'low': return 'סיכון נמוך - יציב';
+      default: return 'סיכון לא ידוע';
+    }
+  };
+
+  if (isLoading) {
     return (
       <DashboardLayout>
         <div className="space-y-8">
@@ -149,20 +178,17 @@ export default function Profile() {
               <span className="text-slate-300">ניקוד סיכון:</span>
               <div className="flex items-center gap-3">
                 <span className="text-2xl font-bold text-white">{diagnosis.totalRiskScore}</span>
-                <span className="text-slate-400">/200</span>
+                <span className="text-slate-400">/400</span>
               </div>
             </div>
             <div className="w-full bg-slate-700 rounded-full h-3">
               <div
                 className="bg-gradient-to-r from-green-500 via-yellow-500 to-red-500 h-3 rounded-full"
-                style={{ width: `${(diagnosis.totalRiskScore / 200) * 100}%` }}
+                style={{ width: `${(diagnosis.totalRiskScore / 400) * 100}%` }}
               />
             </div>
             <Badge className={`${getRiskColor(diagnosis.riskLevel)} border`}>
-              {diagnosis.riskLevel === 'critical' && 'סיכון קריטי - דחוף!'}
-              {diagnosis.riskLevel === 'high' && 'סיכון גבוה - דרוש פעולה'}
-              {diagnosis.riskLevel === 'medium' && 'סיכון בינוני - יש זמן'}
-              {diagnosis.riskLevel === 'low' && 'סיכון נמוך - יציב'}
+              {getRiskDescription(diagnosis.riskLevel)}
             </Badge>
           </CardContent>
         </Card>
@@ -202,25 +228,25 @@ export default function Profile() {
             <CardHeader>
               <CardTitle className="text-white text-lg flex items-center gap-2">
                 <AlertCircle className="w-5 h-5" />
-                מצב משפטי
+                סיכום משפטי
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <div className="flex items-center justify-between">
+              <div className="flex justify-between items-center">
                 <span className="text-slate-300">מספר נושים:</span>
-                <span className="text-white font-bold">{diagnosis.creditorCount}</span>
+                <span className="text-white font-bold">{diagnosis.creditorCount || 0}</span>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-slate-300">הליכי הוצאה לפועל:</span>
-                <Badge className={diagnosis.hasEnforcement ? 'bg-red-500/20 text-red-700 border border-red-500/30' : 'bg-green-500/20 text-green-700 border border-green-500/30'}>
-                  {diagnosis.hasEnforcement ? 'כן - דחוף!' : 'לא'}
-                </Badge>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-300">הוצל"פ פעיל:</span>
+                <span className={diagnosis.hasEnforcement ? 'text-red-400 font-bold' : 'text-green-400 font-bold'}>
+                  {diagnosis.hasEnforcement ? 'כן' : 'לא'}
+                </span>
               </div>
-              <div className="flex items-center justify-between">
+              <div className="flex justify-between items-center">
                 <span className="text-slate-300">מכתבי התראה:</span>
-                <Badge className={diagnosis.hasWarningLetters ? 'bg-orange-500/20 text-orange-700 border border-orange-500/30' : 'bg-green-500/20 text-green-700 border border-green-500/30'}>
+                <span className={diagnosis.hasWarningLetters ? 'text-orange-400 font-bold' : 'text-green-400 font-bold'}>
                   {diagnosis.hasWarningLetters ? 'כן' : 'לא'}
-                </Badge>
+                </span>
               </div>
             </CardContent>
           </Card>
@@ -230,22 +256,20 @@ export default function Profile() {
         {debts.length > 0 && (
           <Card className="bg-slate-800 border-slate-700">
             <CardHeader>
-              <CardTitle className="text-white flex items-center gap-2">
+              <CardTitle className="text-white text-lg flex items-center gap-2">
                 <FileText className="w-5 h-5" />
-                רשימת החובות ({debts.length})
+                החובות שלך ({debts.length})
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {debts.map((debt, index) => (
-                  <div key={index} className="flex items-center justify-between p-3 bg-slate-700/50 rounded-lg border border-slate-600">
-                    <div className="flex-1">
-                      <p className="text-white font-medium">{debt.category}</p>
-                      <p className="text-slate-400 text-sm">ניקוד סיכון: {debt.riskScore}</p>
+                {debts.map((debt, idx) => (
+                  <div key={idx} className="bg-slate-700/50 p-3 rounded flex justify-between items-start">
+                    <div>
+                      <p className="font-medium text-white">{debt.category}</p>
+                      <p className="text-slate-400 text-sm">סיכון: {debt.riskScore}/100</p>
                     </div>
-                    <div className="text-right">
-                      <p className="text-white font-bold">₪{debt.amount.toLocaleString()}</p>
-                    </div>
+                    <span className="text-white font-bold">₪{debt.amount.toLocaleString()}</span>
                   </div>
                 ))}
               </div>
@@ -253,88 +277,24 @@ export default function Profile() {
           </Card>
         )}
 
-        {/* Recommended Actions */}
-        {actions.length > 0 && (
-          <Card className="bg-slate-800 border-slate-700">
-            <CardHeader>
-              <CardTitle className="text-white flex items-center gap-2">
-                <CheckCircle className="w-5 h-5" />
-                פעולות מומלצות
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                {actions.map((action, index) => (
-                  <div key={index} className="flex items-start gap-3 p-3 bg-slate-700/50 rounded-lg">
-                    <CheckCircle className="w-5 h-5 text-green-400 mt-0.5 flex-shrink-0" />
-                    <p className="text-slate-200">{action}</p>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Advanced Scoring Section */}
-        <div className="mt-8">
-          <h2 className="text-2xl font-bold text-white mb-6">ניתוח סיכון מתקדם</h2>
-          <AdvancedScoringSection diagnosis={diagnosis} />
-        </div>
-
-        {/* Payment Plan Section */}
-        <div className="mt-8">
-          <h2 className="text-2xl font-bold text-white mb-6">תוכנית פירעון</h2>
-          <PaymentPlanSection
-            diagnosis={{
-              totalDebt: diagnosis.totalDebt,
-              monthlyIncome: diagnosis.monthlyIncome || 0,
-              monthlyExpenses: diagnosis.monthlyExpenses || 0,
-              availableForDebt: diagnosis.availableForDebt || 0,
-              riskLevel: diagnosis.riskLevel,
-              hasEnforcement: diagnosis.hasEnforcement || false,
-            }}
-          />
-        </div>
-
-        {/* Notifications Center */}
-        <div className="mt-8">
-          <NotificationsCenter />
-        </div>
-
-        {/* Documents Section */}
-        <div className="mt-8">
-          <h2 className="text-2xl font-bold text-white mb-6">מסמכים</h2>
-          <DocumentsSection />
-        </div>
-
-        {/* Tasks Section */}
-        <div className="mt-8">
-          <h2 className="text-2xl font-bold text-white mb-6">משימות אוטומטיות</h2>
-          <TasksSection diagnosis={diagnosis} />
-        </div>
-
-        {/* Professionals Section */}
-        <div className="mt-8">
-          <h2 className="text-2xl font-bold text-white mb-6">בעלי מקצוע מומלצים</h2>
-          <ProfessionalsSection />
-        </div>
-
-        {/* Action Buttons */}
-        <div className="flex gap-3 flex-wrap mt-8">
-          <Button className="bg-blue-600 hover:bg-blue-700">
-            עדכן אבחון
-          </Button>
-          <Button variant="outline" className="border-slate-600 text-slate-300 hover:bg-slate-700">
-            הורד דוח
-          </Button>
-          <Button variant="outline" className="border-slate-600 text-slate-300 hover:bg-slate-700">
-            בקש ייעוץ
-          </Button>
-        </div>
+        {/* Sections */}
+        <PaymentPlanSection diagnosis={{
+          totalDebt: diagnosis.totalDebt,
+          monthlyIncome: diagnosis.monthlyIncome || 0,
+          monthlyExpenses: diagnosis.monthlyExpenses || 0,
+          availableForDebt: diagnosis.availableForDebt || 0,
+          riskLevel: diagnosis.riskLevel,
+          hasEnforcement: diagnosis.hasEnforcement || false,
+        }} />
+        <AdvancedScoringSection diagnosis={diagnosis} />
+        <ProfessionalsSection />
+        <TasksSection diagnosis={diagnosis} />
+        <DocumentsSection />
+        <NotificationsCenter />
 
         {/* Last Updated */}
-        <div className="text-center text-slate-400 text-sm mt-8">
-          <p>אבחון אחרון: {diagnosis.updatedAt ? new Date(diagnosis.updatedAt).toLocaleDateString('he-IL') : new Date(diagnosis.createdAt).toLocaleDateString('he-IL')}</p>
+        <div className="text-center text-slate-400 text-sm">
+          עדכון אחרון: {new Date(diagnosis.updatedAt || diagnosis.createdAt).toLocaleDateString('he-IL')}
         </div>
       </div>
     </DashboardLayout>
