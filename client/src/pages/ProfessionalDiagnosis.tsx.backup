@@ -468,121 +468,86 @@ export default function ProfessionalDiagnosis() {
           <div className="bg-slate-800 rounded-lg p-6 space-y-4">
             <h2 className="text-2xl font-bold text-white mb-6">הוסף חובות</h2>
             
-            {/* Debt Type */}
-            <div>
-              <label className="block text-slate-300 text-sm mb-2">סוג החוב *</label>
-              <select
-                value={currentDebt.category || ''}
-                onChange={(e) => setCurrentDebt(prev => ({...prev, category: e.target.value}))}
-                className="w-full bg-slate-700 text-white p-3 rounded border border-slate-600 focus:border-blue-500 outline-none"
-              >
-                <option value="">בחר סוג חוב</option>
-                <option value="bank_loan">הלוואה מבנק</option>
-                <option value="credit_card_debt">חוב על כרטיס אשראי</option>
-                <option value="credit_company_loan">הלוואה מחברת אשראי</option>
-                <option value="credit_line_loan">הלוואה על מסגרת אשראי</option>
-                <option value="finance_company_loan">הלוואה מחברת מימון</option>
-                <option value="insurance_loan">הלוואה מחברת ביטוח</option>
-                <option value="private_debt">חוב פרטי</option>
-                <option value="lawyer_debt">חוב ממשרד עורכי דין</option>
-                <option value="government_debt">חוב לממשלה</option>
-                <option value="p2p_loan">הלוואה מבלנדר</option>
-                <option value="collection_debt">חוב בגבייה</option>
-              </select>
-            </div>
+            <select
+              value={currentDebt.category || ''}
+              onChange={(e) => setCurrentDebt(prev => ({...prev, category: e.target.value}))}
+              className="w-full bg-slate-700 text-white p-3 rounded border border-slate-600 focus:border-blue-500 outline-none"
+            >
+              <option value="">בחר סוג חוב</option>
+              <option value="credit_card">כרטיס אשראי</option>
+              <option value="bank_loan">הלוואה מבנק</option>
+              <option value="credit_line">מסגרת אשראי</option>
+              <option value="municipality">חוב לעירייה</option>
+              <option value="tax_authority">חוב למס הכנסה</option>
+              <option value="national_insurance">חוב לביטוח לאומי</option>
+              <option value="utilities">חוב לספק חשמל/מים</option>
+              <option value="other">אחר</option>
+            </select>
 
-            {/* Creditor Name */}
-            <div>
-              <label className="block text-slate-300 text-sm mb-2">שם הנושה *</label>
-              <input
-                type="text"
-                placeholder="לדוגמה: בנק הפועלים"
-                value={currentDebt.creditorName || ''}
-                onChange={(e) => setCurrentDebt(prev => ({...prev, creditorName: e.target.value}))}
-                className="w-full bg-slate-700 text-white p-3 rounded border border-slate-600 focus:border-blue-500 outline-none"
-              />
-            </div>
+            <input
+              type="text"
+              placeholder="שם הנושה"
+              value={currentDebt.creditorName || ''}
+              onChange={(e) => setCurrentDebt(prev => ({...prev, creditorName: e.target.value}))}
+              className="w-full bg-slate-700 text-white p-3 rounded border border-slate-600 focus:border-blue-500 outline-none"
+            />
 
-            {/* Debt Amount */}
-            <div>
-              <label className="block text-slate-300 text-sm mb-2">סכום החוב (בש"ח) *</label>
-              <input
-                type="number"
-                min="0"
-                placeholder="לדוגמה: 25000"
-                value={currentDebt.amount && currentDebt.amount > 0 ? currentDebt.amount : ''}
-                onChange={(e) => setCurrentDebt(prev => ({...prev, amount: parseInt(e.target.value) || 0}))}
-                className="w-full bg-slate-700 text-white p-3 rounded border border-slate-600 focus:border-blue-500 outline-none"
-              />
-            </div>
+            <input
+              type="number"
+              min="0"
+              placeholder="סכום החוב"
+              value={currentDebt.amount || 0}
+              onChange={(e) => setCurrentDebt(prev => ({...prev, amount: parseInt(e.target.value) || 0}))}
+              className="w-full bg-slate-700 text-white p-3 rounded border border-slate-600 focus:border-blue-500 outline-none"
+            />
 
-            {/* Interest Rate */}
-            <div>
-              <label className="block text-slate-300 text-sm mb-2">ריבית שנתית (%) - אופציונלי</label>
-              <input
-                type="number"
-                min="0"
-                max="100"
-                placeholder="לדוגמה: 8.5"
-                value={currentDebt.interest && currentDebt.interest > 0 ? currentDebt.interest : ''}
-                onChange={(e) => setCurrentDebt(prev => ({...prev, interest: parseInt(e.target.value) || 0}))}
-                className="w-full bg-slate-700 text-white p-3 rounded border border-slate-600 focus:border-blue-500 outline-none"
-              />
-            </div>
+            <select
+              value={currentDebt.certainty || 'known'}
+              onChange={(e) => setCurrentDebt(prev => ({...prev, certainty: e.target.value as any}))}
+              className="w-full bg-slate-700 text-white p-3 rounded border border-slate-600 focus:border-blue-500 outline-none"
+            >
+              <option value="known">ידוע</option>
+              <option value="estimated">משוער</option>
+              <option value="unknown">לא יודע</option>
+            </select>
 
-            {/* Question 1: Certainty */}
-            <div>
-              <label className="block text-slate-300 text-sm mb-2">כמה בטוח אתה בנתונים האלה?</label>
-              <select
-                value={currentDebt.certainty || 'known'}
-                onChange={(e) => setCurrentDebt(prev => ({...prev, certainty: e.target.value as any}))}
-                className="w-full bg-slate-700 text-white p-3 rounded border border-slate-600 focus:border-blue-500 outline-none"
-              >
-                <option value="known">ידוע - יש לי את כל המידע</option>
-                <option value="estimated">בינוני - יש לי מידע חלקי</option>
-                <option value="unknown">לא בטוח - אני מעריך בערך</option>
-              </select>
-            </div>
+            <select
+              value={currentDebt.urgency || 'medium'}
+              onChange={(e) => setCurrentDebt(prev => ({...prev, urgency: e.target.value as any}))}
+              className="w-full bg-slate-700 text-white p-3 rounded border border-slate-600 focus:border-blue-500 outline-none"
+            >
+              <option value="immediate">דחוף</option>
+              <option value="medium">בינוני</option>
+              <option value="low">נמוך</option>
+            </select>
 
-            {/* Question 2: Last Update */}
-            <div>
-              <label className="block text-slate-300 text-sm mb-2">מתי עדכנת את הנתונים לאחרונה?</label>
-              <select
-                value={currentDebt.urgency || 'medium'}
-                onChange={(e) => setCurrentDebt(prev => ({...prev, urgency: e.target.value as any}))}
-                className="w-full bg-slate-700 text-white p-3 rounded border border-slate-600 focus:border-blue-500 outline-none"
-              >
-                <option value="immediate">עדכני - בחודש האחרון</option>
-                <option value="medium">חצי שנה - לפני 3-6 חודשים</option>
-                <option value="low">שנה - לפני 6-12 חודשים</option>
-              </select>
-            </div>
+            <input
+              type="number"
+              min="0"
+              max="100"
+              placeholder="שיעור ריביות (%)"
+              value={currentDebt.interest || 0}
+              onChange={(e) => setCurrentDebt(prev => ({...prev, interest: parseInt(e.target.value) || 0}))}
+              className="w-full bg-slate-700 text-white p-3 rounded border border-slate-600 focus:border-blue-500 outline-none"
+            />
 
-            {/* Question 3: Status */}
-            <div>
-              <label className="block text-slate-300 text-sm mb-2">מה סטטוס החוב הזה כרגע?</label>
-              <select
-                value={currentDebt.paymentStatus || 'current'}
-                onChange={(e) => setCurrentDebt(prev => ({...prev, paymentStatus: e.target.value as any}))}
-                className="w-full bg-slate-700 text-white p-3 rounded border border-slate-600 focus:border-blue-500 outline-none"
-              >
-                <option value="current">פעיל - אני משלם כרגע</option>
-                <option value="delayed">בעיכוב - יש עיכובים בתשלום</option>
-                <option value="default">בהליכי הוצאה לפועל</option>
-                <option value="enforcement">בהסדר - יש הסכם</option>
-              </select>
-            </div>
+            <input
+              type="date"
+              value={currentDebt.startDate || ''}
+              onChange={(e) => setCurrentDebt(prev => ({...prev, startDate: e.target.value}))}
+              className="w-full bg-slate-700 text-white p-3 rounded border border-slate-600 focus:border-blue-500 outline-none"
+            />
 
-            {/* Start Date */}
-            <div>
-              <label className="block text-slate-300 text-sm mb-2">תאריך התחלת החוב - אופציונלי</label>
-              <input
-                type="date"
-                value={currentDebt.startDate || ''}
-                onChange={(e) => setCurrentDebt(prev => ({...prev, startDate: e.target.value}))}
-                className="w-full bg-slate-700 text-white p-3 rounded border border-slate-600 focus:border-blue-500 outline-none"
-              />
-            </div>
+            <select
+              value={currentDebt.paymentStatus || 'current'}
+              onChange={(e) => setCurrentDebt(prev => ({...prev, paymentStatus: e.target.value as any}))}
+              className="w-full bg-slate-700 text-white p-3 rounded border border-slate-600 focus:border-blue-500 outline-none"
+            >
+              <option value="current">עדכני</option>
+              <option value="delayed">בעיכוב</option>
+              <option value="default">בחדלות</option>
+              <option value="enforcement">הוצל"פ</option>
+            </select>
 
             <div className="flex gap-2">
               <button
