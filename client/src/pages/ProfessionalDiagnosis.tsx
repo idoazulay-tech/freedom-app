@@ -4,6 +4,7 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { useLocation } from 'wouter';
 import { toast } from 'sonner';
 import { ArrowRight, ArrowLeft, Trash2, Edit2, X, ChevronDown } from 'lucide-react';
+import { trpc } from '@/lib/trpc';
 
 interface Debt {
   id: string;
@@ -60,6 +61,19 @@ export default function ProfessionalDiagnosis() {
   const [location, navigate] = useLocation();
   const [step, setStep] = useState(1);
   const [editingDebtId, setEditingDebtId] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  
+  // Mutation for saving diagnosis
+  const saveDiagnosisMutation = trpc.diagnosis.save.useMutation({
+    onSuccess: () => {
+      toast.success('האבחון נשמר בהצלחה!');
+      navigate('/profile');
+    },
+    onError: (error) => {
+      toast.error(`שגיאה בשמירה: ${error.message}`);
+      setIsSaving(false);
+    },
+  });
 
   const [formData, setFormData] = useState<FormData>({
     fullName: '',
@@ -210,18 +224,60 @@ export default function ProfessionalDiagnosis() {
     setEditingDebtId(null);
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    // Validation
+    if (!formData.fullName.trim()) {
+      toast.error('אנא הזן שם מלא');
+      return;
+    }
+    if (!formData.phone.trim()) {
+      toast.error('אנא הזן מספר טלפון');
+      return;
+    }
+    if (!formData.email.trim()) {
+      toast.error('אנא הזן כתובת אימייל');
+      return;
+    }
+    if (formData.monthlyIncome <= 0) {
+      toast.error('אנא הזן הכנסה חדשית');
+      return;
+    }
+    if (formData.debts.length === 0) {
+      toast.error('אנא הוסף לפחות חוב אחד');
+      return;
+    }
+
     const totalRisk = calculateTotalRisk();
     const persona = getPersona(totalRisk);
     
-    setFormData(prev => ({
-      ...prev,
-      totalRisk,
-      persona
-    }));
-
-    // Navigate to profile
-    navigate('/profile');
+    setIsSaving(true);
+    
+    try {
+      // Save to database
+      await saveDiagnosisMutation.mutateAsync({
+        riskScore: totalRisk,
+        riskLevel: persona,
+        totalDebt: formData.debts.reduce((sum, d) => sum + d.amount, 0),
+        monthlyIncome: formData.monthlyIncome,
+        monthlyExpenses: formData.expensesMode === 'total' 
+          ? formData.totalExpenses 
+          : calculateTotalExpensesFromDetailed(),
+        availableForDebt: Math.max(0, formData.monthlyIncome - (formData.expensesMode === 'total' ? formData.totalExpenses : calculateTotalExpensesFromDetailed())),
+        creditorCount: formData.debts.length,
+        hasEnforcement: formData.hasEnforcement,
+        hasWarningLetters: formData.hasLetters,
+        debtsData: JSON.stringify(formData.debts),
+        actionsData: JSON.stringify({
+          hasEnforcement: formData.hasEnforcement,
+          hasLetters: formData.hasLetters,
+          hasNegotiation: formData.hasNegotiation,
+          hasLawyer: formData.hasLawyer,
+        }),
+      });
+    } catch (error) {
+      console.error('Error saving diagnosis:', error);
+      setIsSaving(false);
+    }
   };
 
   // Calculate total expenses from detailed mode
@@ -754,9 +810,10 @@ export default function ProfessionalDiagnosis() {
           ) : (
             <button
               onClick={handleSubmit}
-              className="flex-1 bg-green-600 hover:bg-green-700 text-white p-3 rounded font-semibold transition-colors"
+              disabled={isSaving}
+              className="flex-1 bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed text-white p-3 rounded font-semibold transition-colors"
             >
-              סיים אבחון וצור פרופיל
+              {isSaving ? 'שומר...' : 'סיים אבחון וצור פרופיל'}
             </button>
           )}
         </div>

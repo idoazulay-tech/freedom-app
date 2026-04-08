@@ -117,30 +117,43 @@ export const diagnosisRouter = router({
     }),
 
   getMine: protectedProcedure.query(async ({ ctx }) => {
-    const db = await getDb();
-    if (!db) return null;
+    try {
+      const db = await getDb();
+      if (!db) {
+        console.warn('[Diagnosis] Database not available for user:', ctx.user.id);
+        return null;
+      }
 
-    const result = await db
-      .select()
-      .from(diagnoses)
-      .where(eq(diagnoses.userId, ctx.user.id))
-      .orderBy(diagnoses.createdAt)
-      .limit(1);
+      const result = await db
+        .select()
+        .from(diagnoses)
+        .where(eq(diagnoses.userId, ctx.user.id))
+        .orderBy(diagnoses.createdAt)
+        .limit(1);
 
-    return result[0] || null;
+      return result[0] || null;
+    } catch (error) {
+      console.error('[Diagnosis] Error fetching diagnosis:', error);
+      throw new Error(`Failed to fetch diagnosis: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   }),
 
   hasProfile: protectedProcedure.query(async ({ ctx }) => {
-    const db = await getDb();
-    if (!db) return false;
+    try {
+      const db = await getDb();
+      if (!db) return false;
 
-    const result = await db
-      .select()
-      .from(diagnoses)
-      .where(eq(diagnoses.userId, ctx.user.id))
-      .limit(1);
+      const result = await db
+        .select()
+        .from(diagnoses)
+        .where(eq(diagnoses.userId, ctx.user.id))
+        .limit(1);
 
-    return result.length > 0;
+      return result.length > 0;
+    } catch (error) {
+      console.error('[Diagnosis] Error checking profile:', error);
+      return false;
+    }
   }),
 
   // Get matched professionals based on diagnosis
