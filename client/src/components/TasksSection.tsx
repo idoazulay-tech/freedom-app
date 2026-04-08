@@ -27,43 +27,36 @@ interface Task {
   estimatedHours: number;
 }
 
-export default function TasksSection({ diagnosis }: { diagnosis: DiagnosisData }) {
+export default function TasksSection({ diagnosis }: { diagnosis?: DiagnosisData }) {
   const [filterPriority, setFilterPriority] = useState<string | null>(null);
   const [completedTasks, setCompletedTasks] = useState<Set<string>>(new Set());
   const [tasks, setTasks] = useState<Task[]>([]);
 
   // Fetch generated tasks from server (server generates based on stored diagnosis)
-  const { data: generatedTasks, isPending } = (trpc.diagnosis as any).generateTasks.useMutation();
+  const { data: generatedTasksData, isPending } = (trpc.diagnosis as any).generateTasks.useQuery();
   
-  // Generate tasks on mount
+  // Generate tasks on mount - use useEffect to fetch
   useEffect(() => {
-    if (!generatedTasks.data) {
-      generatedTasks.mutate();
-    }
+    // Tasks will be fetched automatically by useQuery
   }, []);
 
   // Mutation to complete a task
-  const completeTaskMutation = (trpc.diagnosis as any).completeTask.useMutation({
-    onSuccess: () => {
-      // Refresh tasks after completion
-      generatedTasks.mutate();
-    },
-  });
+  const completeTaskMutation = (trpc.diagnosis as any).completeTask.useMutation();
 
   useEffect(() => {
-    if (generatedTasks.data) {
+    if (generatedTasksData && Array.isArray(generatedTasksData)) {
       // Convert string dates to Date objects if needed
-      const tasksWithDates = generatedTasks.data.map((task: any) => ({
+      const tasksWithDates = generatedTasksData.map((task: any) => ({
         ...task,
         dueDate: typeof task.dueDate === 'string' ? new Date(task.dueDate) : task.dueDate,
       }));
       setTasks(tasksWithDates);
     }
-  }, [generatedTasks.data]);
+  }, [generatedTasksData]);
 
   const filteredTasks = filterPriority ? tasks.filter((t) => t.priority === filterPriority) : tasks;
   
-  if (isPending) {
+  if (isPending || !tasks || tasks.length === 0) {
     return (
       <Card className="bg-slate-800 border-slate-700">
         <CardContent className="p-8 text-center text-slate-300">טוען משימות...</CardContent>

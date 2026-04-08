@@ -1,66 +1,31 @@
-import { useState } from 'react';
-import { useAuth } from '@/_core/hooks/useAuth';
-import DashboardLayout from '@/components/DashboardLayout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { trpc } from '@/lib/trpc';
-import { toast } from 'sonner';
-import { ArrowRight, AlertCircle, CheckCircle, Plus, Trash2 } from 'lucide-react';
+'use client';
+
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { useLocation } from 'wouter';
-
-// 42 Expense Categories
-const EXPENSE_CATEGORIES = [
-  'דיור', 'משכנתא', 'שכר דירה', 'מזון', 'תחבורה', 'חשמל', 'מים', 'גז',
-  'טלפון', 'אינטרנט', 'ביטוח רכב', 'ביטוח בריאות', 'ביטוח בית',
-  'תרופות', 'רופא', 'שיניים', 'משקפיים', 'חינוך', 'פעילויות ילדים', 'מזון לילדים',
-  'בגדים', 'נעליים', 'טיפול אישי', 'גיהוץ', 'כביסה', 'ניקיון',
-  'בידור', 'ספרים', 'גימים', 'מתנות', 'חגים', 'טיולים',
-  'חוב קודם', 'ריביות', 'עמלות בנק', 'עו״ד', 'מסמכים', 'בדיקות',
-  'חיסכון', 'חירום'
-];
-
-// 12 Debt Types
-const DEBT_TYPES = [
-  { value: 'credit_card', label: 'כרטיס אשראי' },
-  { value: 'personal_loan', label: 'הלוואה אישית' },
-  { value: 'credit_line', label: 'Credit Line' },
-  { value: 'mortgage', label: 'משכנתא' },
-  { value: 'bank_loan', label: 'הלוואה בנקאית' },
-  { value: 'taxes', label: 'חובות מס' },
-  { value: 'municipality', label: 'חוב לעירייה' },
-  { value: 'national_insurance', label: 'חוב לביטוח לאומי' },
-  { value: 'utilities', label: 'חוב לספק חשמל/מים' },
-  { value: 'bank_israel', label: 'חוב לבנק ישראל' },
-  { value: 'collection_agency', label: 'חוב למגדל' },
-  { value: 'other', label: 'אחר' },
-];
+import { toast } from 'sonner';
+import { ArrowRight, ArrowLeft, Trash2 } from 'lucide-react';
 
 interface Debt {
   id: string;
   category: string;
-  subcategory: string;
   amount: number;
-  riskScore: number;
   creditorName: string;
-  caseNumber: string;
-  interestRate: number;
-  enforcementDate: string;
-  debtStartDate: string;
-  paymentStatus: 'current' | 'late' | 'defaulted' | 'enforcement';
-  monthlyPayment: number;
-  certainty: 'known' | 'estimated' | 'missing';
+  certainty: 'known' | 'estimated' | 'unknown';
   urgency: 'immediate' | 'medium' | 'low';
+  interest: number;
+  startDate: string;
+  paymentStatus: 'current' | 'delayed' | 'default' | 'enforcement';
 }
 
 interface FormData {
   // Step 1: Identity
-  name: string;
+  fullName: string;
   phone: string;
   email: string;
   maritalStatus: string;
   dependents: number;
   
-  // Step 2: General
+  // Step 2: Financial
   monthlyIncome: number;
   incomeStability: string;
   expenses: Record<string, number>;
@@ -68,27 +33,48 @@ interface FormData {
   // Step 3: Debts
   debts: Debt[];
   
-  // Step 4: Additional Info
+  // Step 4: Additional
   hasEnforcement: boolean;
-  hasWarningLetters: boolean;
-  previousNegotiations: boolean;
-  needsLegalHelp: boolean;
+  hasLetters: boolean;
+  hasNegotiation: boolean;
+  hasLawyer: boolean;
   
-  // Step 5: Timeline
-  timeline: string;
-  reviewed: boolean;
-  
+  // Step 5: Results
   totalRisk: number;
-  totalAmount: number;
-  monthlyExpenses: number;
+  persona: string;
 }
 
+const EXPENSE_CATEGORIES = [
+  'דיור', 'חשמל', 'מים', 'גז', 'אינטרנט', 'טלפון',
+  'מזון', 'תחבורה', 'בנזין', 'ביטוח רכב', 'טיפול רפואי',
+  'תרופות', 'ביטוח בריאות', 'חינוך', 'בגדים', 'ניקיון',
+  'טיפול אישי', 'בידור', 'ספרים', 'חברות ספורט', 'מסעדות',
+  'קפה', 'חיות מחמד', 'טיפול חיות', 'תחזוקה בית', 'רהיטים',
+  'כלים', 'ביגוד ילדים', 'צעצועים', 'טיולים', 'מתנות',
+  'חגים', 'חיסכון', 'השקעות', 'פנסיה', 'אחר'
+];
+
 export default function ProfessionalDiagnosis() {
-  const { user } = useAuth();
-  const [, setLocation] = useLocation();
+  const [location, navigate] = useLocation();
   const [step, setStep] = useState(1);
+  const debtCategorySelectRef = useRef<HTMLSelectElement>(null);
+
+  // Setup direct event listener for select
+  useEffect(() => {
+    const selectElement = debtCategorySelectRef.current;
+    if (!selectElement) return;
+
+    const handleSelectChange = (e: Event) => {
+      const target = e.target as HTMLSelectElement;
+      console.log('🔴 Direct event listener fired:', target.value);
+      setCurrentDebt(prev => ({...prev, category: target.value}));
+    };
+
+    selectElement.addEventListener('change', handleSelectChange);
+    return () => selectElement.removeEventListener('change', handleSelectChange);
+  }, []);
   const [formData, setFormData] = useState<FormData>({
-    name: '',
+    fullName: '',
     phone: '',
     email: '',
     maritalStatus: '',
@@ -98,674 +84,453 @@ export default function ProfessionalDiagnosis() {
     expenses: {},
     debts: [],
     hasEnforcement: false,
-    hasWarningLetters: false,
-    previousNegotiations: false,
-    needsLegalHelp: false,
-    timeline: '',
-    reviewed: false,
+    hasLetters: false,
+    hasNegotiation: false,
+    hasLawyer: false,
     totalRisk: 0,
-    totalAmount: 0,
-    monthlyExpenses: 0,
+    persona: '',
   });
 
   const [currentDebt, setCurrentDebt] = useState<Partial<Debt>>({
     category: '',
-    subcategory: '',
     amount: 0,
-    riskScore: 0,
     creditorName: '',
-    caseNumber: '',
-    interestRate: 0,
-    enforcementDate: '',
-    debtStartDate: '',
-    paymentStatus: 'current',
-    monthlyPayment: 0,
     certainty: 'known',
     urgency: 'medium',
+    interest: 0,
+    startDate: '',
+    paymentStatus: 'current',
   });
 
-  const saveMutation = trpc.diagnosis.save.useMutation({
-    onSuccess: () => {
-      toast.success('אבחון נשמר בהצלחה!');
-      setTimeout(() => {
-        setLocation('/profile');
-      }, 1000);
-    },
-    onError: (error: any) => {
-      toast.error(`שגיאה: ${error.message}`);
-    },
-  });
-
-  // Calculate risk level (Yossi/Dana/Avi/Green) - 0-400 scale
-  const getRiskLevel = (score: number) => {
-    if (score >= 280) return { label: 'Yossi', color: 'text-red-500 bg-red-500/20', description: 'קריטי - צריך עזרה משפטית מיידית' };
-    if (score >= 180) return { label: 'Dana', color: 'text-orange-500 bg-orange-500/20', description: 'גבוה - צריך ייעוץ כלכלי' };
-    if (score >= 100) return { label: 'Avi', color: 'text-yellow-500 bg-yellow-500/20', description: 'בינוני - צריך תוכנית פעולה' };
-    return { label: 'Green', color: 'text-green-500 bg-green-500/20', description: 'נמוך - מצב יציב' };
+  // Step handlers
+  const handleNext = () => {
+    console.log('🔵 handleNext called, current step:', step);
+    if (step < 5) {
+      setStep(step + 1);
+    }
   };
 
-  const calculateDebtRiskScore = (debt: Partial<Debt>) => {
-    let score = 0;
-    if (debt.amount && debt.amount > 100000) score += 30;
-    else if (debt.amount && debt.amount > 50000) score += 20;
-    else if (debt.amount) score += 10;
-
-    if (debt.enforcementDate) score += 40;
-    if (debt.paymentStatus === 'defaulted') score += 30;
-    else if (debt.paymentStatus === 'late') score += 15;
-
-    if (debt.interestRate && debt.interestRate > 15) score += 20;
-    else if (debt.interestRate) score += 10;
-
-    return Math.min(score, 100);
+  const handlePrev = () => {
+    console.log('🔵 handlePrev called, current step:', step);
+    if (step > 1) {
+      setStep(step - 1);
+    }
   };
 
-  const addDebt = () => {
+  const handleAddDebt = (e?: React.MouseEvent<HTMLButtonElement>) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    console.log('🟢 handleAddDebt called');
+    console.log('Current debt:', currentDebt);
+    
     if (!currentDebt.category || !currentDebt.amount || !currentDebt.creditorName) {
+      console.log('❌ Validation failed');
       toast.error('אנא מלא את כל השדות החובה');
       return;
     }
 
+    console.log('✅ Validation passed, adding debt...');
     const newDebt: Debt = {
-      id: `debt-${Date.now()}`,
+      id: Date.now().toString(),
       category: currentDebt.category || '',
-      subcategory: currentDebt.subcategory || '',
       amount: currentDebt.amount || 0,
-      riskScore: calculateDebtRiskScore(currentDebt),
       creditorName: currentDebt.creditorName || '',
-      caseNumber: currentDebt.caseNumber || '',
-      interestRate: currentDebt.interestRate || 0,
-      enforcementDate: currentDebt.enforcementDate || '',
-      debtStartDate: currentDebt.debtStartDate || '',
-      paymentStatus: currentDebt.paymentStatus || 'current',
-      monthlyPayment: currentDebt.monthlyPayment || 0,
       certainty: currentDebt.certainty || 'known',
       urgency: currentDebt.urgency || 'medium',
+      interest: currentDebt.interest || 0,
+      startDate: currentDebt.startDate || '',
+      paymentStatus: currentDebt.paymentStatus || 'current',
     };
 
     setFormData(prev => ({
       ...prev,
-      debts: [...prev.debts, newDebt],
-      totalAmount: prev.totalAmount + (currentDebt.amount || 0),
+      debts: [...prev.debts, newDebt]
     }));
 
     setCurrentDebt({
       category: '',
-      subcategory: '',
       amount: 0,
-      riskScore: 0,
       creditorName: '',
-      caseNumber: '',
-      interestRate: 0,
-      enforcementDate: '',
-      debtStartDate: '',
-      paymentStatus: 'current',
-      monthlyPayment: 0,
       certainty: 'known',
       urgency: 'medium',
+      interest: 0,
+      startDate: '',
+      paymentStatus: 'current',
     });
 
-    toast.success('חוב נוסף בהצלחה');
+    console.log('✅ Debt added successfully');
+    toast.success('חוב נוסף בהצלחה!');
   };
 
-  const removeDebt = (id: string) => {
-    const debt = formData.debts.find(d => d.id === id);
-    if (debt) {
-      setFormData(prev => ({
-        ...prev,
-        debts: prev.debts.filter(d => d.id !== id),
-        totalAmount: prev.totalAmount - debt.amount,
-      }));
-    }
+  const handleRemoveDebt = (id: string) => {
+    setFormData(prev => ({
+      ...prev,
+      debts: prev.debts.filter(d => d.id !== id)
+    }));
   };
 
-  const calculateTotalRisk = () => {
-    let score = 0;
+  const handleSubmit = () => {
+    console.log('🟢 handleSubmit called');
+    const totalRisk = calculateTotalRisk();
+    const persona = getPersona(totalRisk);
     
-    // FINANCIAL LAYER (0-150)
-    const debtRatio = formData.totalAmount / Math.max(formData.monthlyIncome, 1);
-    if (debtRatio > 10) score += 50;
-    else if (debtRatio > 5) score += 40;
-    else if (debtRatio > 2) score += 30;
-    else if (debtRatio > 1) score += 20;
-    else score += 10;
-    
-    // Income stability (0-50)
-    if (formData.incomeStability === 'unstable') score += 40;
-    else if (formData.incomeStability === 'seasonal') score += 20;
-    else score += 5;
-    
-    // Cash flow (0-50)
-    const availableCashFlow = formData.monthlyIncome - formData.monthlyExpenses;
-    if (availableCashFlow < 0) score += 50;
-    else if (availableCashFlow < 1000) score += 30;
-    else if (availableCashFlow < 3000) score += 15;
-    else score += 5;
-    
-    // LEGAL LAYER (0-150)
-    // Enforcement status (0-50)
-    if (formData.hasEnforcement) score += 50;
-    
-    // Warning letters (0-50)
-    if (formData.hasWarningLetters) score += 40;
-    
-    // Payment status (0-50)
-    const defaultedCount = formData.debts.filter(d => d.paymentStatus === 'defaulted').length;
-    const lateCount = formData.debts.filter(d => d.paymentStatus === 'late').length;
-    score += Math.min(50, defaultedCount * 20 + lateCount * 10);
-    
-    // CASH FLOW LAYER (0-100)
-    // Number of creditors (0-30)
-    score += Math.min(30, formData.debts.length * 5);
-    
-    // Payment history (0-40)
-    if (formData.previousNegotiations) score += 20;
-    if (formData.needsLegalHelp) score += 20;
-    
-    // Urgency distribution (0-30)
-    const immediateCount = formData.debts.filter(d => d.urgency === 'immediate').length;
-    score += Math.min(30, immediateCount * 10);
-    
-    return Math.min(score, 400);
+    setFormData(prev => ({
+      ...prev,
+      totalRisk,
+      persona
+    }));
+
+    // Navigate to profile
+    navigate('/profile');
   };
 
-  const handleNext = () => {
-    if (step === 3 && formData.debts.length === 0) {
-      toast.error('אנא הוסף לפחות חוב אחד');
-      return;
-    }
-    if (step === 4) {
-      const totalRisk = calculateTotalRisk();
-      setFormData(prev => ({ ...prev, totalRisk }));
-    }
-    if (step < 5) setStep(step + 1);
+  const calculateTotalRisk = (): number => {
+    let risk = 0;
+    
+    // Financial layer (0-150)
+    const debtToIncome = formData.monthlyIncome > 0 
+      ? (formData.debts.reduce((sum, d) => sum + d.amount, 0) / formData.monthlyIncome) 
+      : 100;
+    risk += Math.min(150, debtToIncome * 50);
+    
+    // Legal layer (0-150)
+    if (formData.hasEnforcement) risk += 80;
+    if (formData.hasLetters) risk += 40;
+    if (formData.hasNegotiation) risk += 20;
+    
+    // Cash flow layer (0-100)
+    risk += Math.min(100, formData.debts.length * 15);
+    
+    return Math.min(400, Math.max(0, risk));
   };
 
-  const handleBack = () => {
-    if (step > 1) setStep(step - 1);
+  const getPersona = (risk: number): string => {
+    if (risk < 100) return 'Green';
+    if (risk < 180) return 'Avi';
+    if (risk < 280) return 'Dana';
+    return 'Yossi';
   };
-
-  const handleSubmit = async () => {
-    try {
-      const totalRisk = calculateTotalRisk();
-      const riskLevelObj = getRiskLevel(totalRisk);
-      const availableForDebt = Math.max(0, formData.monthlyIncome - formData.monthlyExpenses);
-
-      await saveMutation.mutateAsync({
-        riskScore: totalRisk,
-        riskLevel: riskLevelObj.label,
-        totalDebt: formData.totalAmount,
-        monthlyIncome: formData.monthlyIncome,
-        monthlyExpenses: formData.monthlyExpenses,
-        availableForDebt,
-        creditorCount: formData.debts.length,
-        hasEnforcement: formData.hasEnforcement,
-        hasWarningLetters: formData.hasWarningLetters,
-        debtsData: JSON.stringify(formData.debts),
-        actionsData: JSON.stringify([]),
-      });
-    } catch (error) {
-      console.error('Error saving diagnosis:', error);
-    }
-  };
-
-  const riskLevel = getRiskLevel(formData.totalRisk);
 
   return (
-    <DashboardLayout>
-      <div className="max-w-4xl mx-auto space-y-8">
-        {/* Header */}
-        <div>
-          <h1 className="text-3xl font-bold text-white mb-2">אבחון מקצועי</h1>
-          <p className="text-slate-400">שלב {step} מתוך 5</p>
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 p-4">
+      <div className="max-w-2xl mx-auto">
+        {/* Progress bar */}
+        <div className="mb-8">
+          <div className="flex justify-between mb-2">
+            <span className="text-white text-sm">שלב {step} מתוך 5</span>
+            <span className="text-slate-400 text-sm">{Math.round((step / 5) * 100)}%</span>
+          </div>
+          <div className="w-full bg-slate-700 rounded-full h-2">
+            <div 
+              className="bg-blue-600 h-2 rounded-full transition-all"
+              style={{ width: `${(step / 5) * 100}%` }}
+            />
+          </div>
         </div>
 
-        {/* Progress Bar */}
-        <div className="w-full bg-slate-700 rounded-full h-2">
-          <div
-            className="bg-blue-600 h-2 rounded-full transition-all"
-            style={{ width: `${(step / 5) * 100}%` }}
-          />
-        </div>
+        {/* Step 1: Identity */}
+        {step === 1 && (
+          <div className="bg-slate-800 rounded-lg p-6 space-y-4">
+            <h2 className="text-2xl font-bold text-white mb-6">זהות</h2>
+            <input
+              type="text"
+              placeholder="שם מלא"
+              value={formData.fullName}
+              onChange={(e) => setFormData({...formData, fullName: e.target.value})}
+              className="w-full bg-slate-700 text-white p-3 rounded border border-slate-600 focus:border-blue-500 outline-none"
+            />
+            <input
+              type="tel"
+              placeholder="05X-XXXXXXX"
+              value={formData.phone}
+              onChange={(e) => setFormData({...formData, phone: e.target.value})}
+              className="w-full bg-slate-700 text-white p-3 rounded border border-slate-600 focus:border-blue-500 outline-none"
+            />
+            <input
+              type="email"
+              placeholder="example@email.com"
+              value={formData.email}
+              onChange={(e) => setFormData({...formData, email: e.target.value})}
+              className="w-full bg-slate-700 text-white p-3 rounded border border-slate-600 focus:border-blue-500 outline-none"
+            />
+            <select
+              value={formData.maritalStatus}
+              onChange={(e) => setFormData({...formData, maritalStatus: e.target.value})}
+              className="w-full bg-slate-700 text-white p-3 rounded border border-slate-600 focus:border-blue-500 outline-none"
+            >
+              <option value="">בחר מצב משפחתי</option>
+              <option value="single">רווק/ה</option>
+              <option value="married">נשוי/ה</option>
+              <option value="divorced">גרוש/ה</option>
+              <option value="widowed">אלמן/ה</option>
+            </select>
+            <input
+              type="number"
+              placeholder="מספר תלויים"
+              value={formData.dependents}
+              onChange={(e) => setFormData({...formData, dependents: parseInt(e.target.value) || 0})}
+              className="w-full bg-slate-700 text-white p-3 rounded border border-slate-600 focus:border-blue-500 outline-none"
+            />
+          </div>
+        )}
 
-        {/* Step Content */}
-        <Card className="bg-slate-800 border-slate-700">
-          <CardHeader>
-            <CardTitle className="text-white">
-              {step === 1 && 'זהות'}
-              {step === 2 && 'מצב כלכלי'}
-              {step === 3 && 'הוסף חובות'}
-              {step === 4 && 'מידע נוסף'}
-              {step === 5 && 'סיכום וביקורת'}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Step 1: Identity */}
-            {step === 1 && (
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">שם מלא</label>
-                  <input
-                    type="text"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full px-4 py-2 bg-slate-700 text-white rounded border border-slate-600 focus:border-blue-500 focus:outline-none"
-                    placeholder="הכנס שם מלא"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">טלפון</label>
-                  <input
-                    type="tel"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    className="w-full px-4 py-2 bg-slate-700 text-white rounded border border-slate-600 focus:border-blue-500 focus:outline-none"
-                    placeholder="05X-XXXXXXX"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">דוא"ל</label>
-                  <input
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="w-full px-4 py-2 bg-slate-700 text-white rounded border border-slate-600 focus:border-blue-500 focus:outline-none"
-                    placeholder="example@email.com"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">מצב משפחתי</label>
-                  <select
-                    value={formData.maritalStatus}
-                    onChange={(e) => setFormData({ ...formData, maritalStatus: e.target.value })}
-                    className="w-full px-4 py-2 bg-slate-700 text-white rounded border border-slate-600 focus:border-blue-500 focus:outline-none"
+        {/* Step 2: Financial */}
+        {step === 2 && (
+          <div className="bg-slate-800 rounded-lg p-6 space-y-4">
+            <h2 className="text-2xl font-bold text-white mb-6">מצב כלכלי</h2>
+            <input
+              type="number"
+              placeholder="הכנסה חודשית"
+              value={formData.monthlyIncome}
+              onChange={(e) => setFormData({...formData, monthlyIncome: parseInt(e.target.value) || 0})}
+              className="w-full bg-slate-700 text-white p-3 rounded border border-slate-600 focus:border-blue-500 outline-none"
+            />
+            <select
+              value={formData.incomeStability}
+              onChange={(e) => setFormData({...formData, incomeStability: e.target.value})}
+              className="w-full bg-slate-700 text-white p-3 rounded border border-slate-600 focus:border-blue-500 outline-none"
+            >
+              <option value="">בחר יציבות הכנסה</option>
+              <option value="stable">קבועה</option>
+              <option value="variable">משתנה</option>
+              <option value="unstable">לא יציבה</option>
+            </select>
+            <div className="grid grid-cols-2 gap-3">
+              {EXPENSE_CATEGORIES.map(cat => (
+                <input
+                  key={cat}
+                  type="number"
+                  placeholder={`${cat} (₪)`}
+                  value={formData.expenses[cat] || 0}
+                  onChange={(e) => setFormData({
+                    ...formData,
+                    expenses: {...formData.expenses, [cat]: parseInt(e.target.value) || 0}
+                  })}
+                  className="bg-slate-700 text-white p-2 rounded border border-slate-600 focus:border-blue-500 outline-none text-sm"
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Step 3: Debts */}
+        {step === 3 && (
+          <div className="bg-slate-800 rounded-lg p-6 space-y-4">
+            <h2 className="text-2xl font-bold text-white mb-6">הוסף חובות</h2>
+            
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-300">בחר סוג חוב</label>
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { value: 'creditCard', label: 'כרטיס אשראי' },
+                  { value: 'bankLoan', label: 'הלוואה בנקאית' },
+                  { value: 'personalLoan', label: 'הלוואה אישית' },
+                  { value: 'mortgage', label: 'משכנתא' },
+                  { value: 'other', label: 'אחר' }
+                ].map(option => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => {
+                      console.log('🟢 Category button clicked:', option.value);
+                      setCurrentDebt(prev => ({...prev, category: option.value}));
+                    }}
+                    className={`p-2 rounded text-sm font-medium transition-colors ${
+                      currentDebt.category === option.value
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-slate-700 text-gray-300 hover:bg-slate-600'
+                    }`}
                   >
-                    <option value="">בחר מצב משפחתי</option>
-                    <option value="single">רווק/ה</option>
-                    <option value="married">נשוי/ה</option>
-                    <option value="divorced">גרוש/ה</option>
-                    <option value="widowed">אלמן/ה</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">מספר תלויים</label>
-                  <input
-                    type="number"
-                    value={formData.dependents}
-                    onChange={(e) => setFormData({ ...formData, dependents: parseInt(e.target.value) || 0 })}
-                    className="w-full px-4 py-2 bg-slate-700 text-white rounded border border-slate-600 focus:border-blue-500 focus:outline-none"
-                    placeholder="0"
-                  />
-                </div>
+                    {option.label}
+                  </button>
+                ))}
               </div>
-            )}
+            </div>
 
-            {/* Step 2: Financial Situation */}
-            {step === 2 && (
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">הכנסה חודשית (₪)</label>
-                  <input
-                    type="number"
-                    value={formData.monthlyIncome || ''}
-                    onChange={(e) => setFormData({ ...formData, monthlyIncome: parseFloat(e.target.value) || 0 })}
-                    className="w-full px-4 py-2 bg-slate-700 text-white rounded border border-slate-600 focus:border-blue-500 focus:outline-none"
-                    placeholder="0"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">יציבות הכנסה</label>
-                  <select
-                    value={formData.incomeStability}
-                    onChange={(e) => setFormData({ ...formData, incomeStability: e.target.value })}
-                    className="w-full px-4 py-2 bg-slate-700 text-white rounded border border-slate-600 focus:border-blue-500 focus:outline-none"
-                  >
-                    <option value="">בחר יציבות</option>
-                    <option value="stable">קבועה</option>
-                    <option value="unstable">לא קבועה</option>
-                    <option value="seasonal">עונתית</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">הוצאות חודשיות (42 קטגוריות)</label>
-                  <div className="grid grid-cols-2 gap-3 max-h-96 overflow-y-auto p-3 bg-slate-700/30 rounded">
-                    {EXPENSE_CATEGORIES.map(category => (
-                      <div key={category}>
-                        <label className="text-xs text-gray-400">{category}</label>
-                        <input
-                          type="number"
-                          placeholder="₪"
-                          onChange={(e) => {
-                            const value = parseFloat(e.target.value) || 0;
-                            setFormData(prev => ({
-                              ...prev,
-                              expenses: { ...prev.expenses, [category]: value },
-                              monthlyExpenses: Object.values({...prev.expenses, [category]: value}).reduce((a, b) => a + b, 0)
-                            }));
-                          }}
-                          className="w-full px-2 py-1 bg-slate-700 border-slate-600 text-white text-sm rounded border focus:border-blue-500 focus:outline-none"
-                        />
+            <input
+              type="number"
+              placeholder="סכום חוב (₪)"
+              value={currentDebt.amount || 0}
+              onChange={(e) => setCurrentDebt(prev => ({...prev, amount: parseInt(e.target.value) || 0}))}
+              className="w-full bg-slate-700 text-white p-3 rounded border border-slate-600 focus:border-blue-500 outline-none"
+            />
+
+            <input
+              type="text"
+              placeholder="שם הנושה"
+              value={currentDebt.creditorName || ''}
+              onChange={(e) => setCurrentDebt(prev => ({...prev, creditorName: e.target.value}))}
+              className="w-full bg-slate-700 text-white p-3 rounded border border-slate-600 focus:border-blue-500 outline-none"
+            />
+
+            <div className="grid grid-cols-2 gap-3">
+              <select
+                value={currentDebt.certainty || 'known'}
+                onChange={(e) => setCurrentDebt(prev => ({...prev, certainty: e.target.value as any}))}
+                className="bg-slate-700 text-white p-3 rounded border border-slate-600 focus:border-blue-500 outline-none"
+              >
+                <option value="known">ידוע</option>
+                <option value="estimated">משוער</option>
+                <option value="unknown">לא יודע</option>
+              </select>
+
+              <select
+                value={currentDebt.urgency || 'medium'}
+                onChange={(e) => setCurrentDebt(prev => ({...prev, urgency: e.target.value as any}))}
+                className="bg-slate-700 text-white p-3 rounded border border-slate-600 focus:border-blue-500 outline-none"
+              >
+                <option value="immediate">מיידית</option>
+                <option value="medium">בינונית</option>
+                <option value="low">נמוכה</option>
+              </select>
+            </div>
+
+            <input
+              type="number"
+              placeholder="ריביות (%)"
+              value={currentDebt.interest || 0}
+              onChange={(e) => setCurrentDebt(prev => ({...prev, interest: parseInt(e.target.value) || 0}))}
+              className="w-full bg-slate-700 text-white p-3 rounded border border-slate-600 focus:border-blue-500 outline-none"
+            />
+
+            <input
+              type="date"
+              value={currentDebt.startDate || ''}
+              onChange={(e) => setCurrentDebt(prev => ({...prev, startDate: e.target.value}))}
+              className="w-full bg-slate-700 text-white p-3 rounded border border-slate-600 focus:border-blue-500 outline-none"
+            />
+
+            <select
+              value={currentDebt.paymentStatus || 'current'}
+              onChange={(e) => setCurrentDebt(prev => ({...prev, paymentStatus: e.target.value as any}))}
+              className="w-full bg-slate-700 text-white p-3 rounded border border-slate-600 focus:border-blue-500 outline-none"
+            >
+              <option value="current">עדכני</option>
+              <option value="delayed">בעיכוב</option>
+              <option value="default">בחדלות</option>
+              <option value="enforcement">הוצל"פ</option>
+            </select>
+
+            <button
+              type="button"
+              onClick={handleAddDebt}
+              className="w-full bg-green-600 hover:bg-green-700 text-white p-3 rounded font-semibold transition-colors"
+            >
+              הוסף חוב
+            </button>
+
+            {formData.debts.length > 0 && (
+              <div className="mt-6">
+                <h3 className="text-white font-semibold mb-3">חובות שנוספו ({formData.debts.length})</h3>
+                <div className="space-y-2">
+                  {formData.debts.map(debt => (
+                    <div key={debt.id} className="bg-slate-700/50 p-3 rounded flex justify-between items-center">
+                      <div>
+                        <p className="text-white font-semibold">{debt.category} - ₪{debt.amount}</p>
+                        <p className="text-slate-300 text-sm">{debt.creditorName}</p>
                       </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Step 3: Debts Loop */}
-            {step === 3 && (
-              <div className="space-y-6">
-                {/* Debt Form */}
-                <div className="space-y-4 p-4 bg-slate-700/50 rounded">
-                  <h3 className="text-lg font-semibold text-white">הוסף חוב</h3>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-2">סוג חוב</label>
-                    <select
-                      value={currentDebt.category || ''}
-                      onChange={(e) => setCurrentDebt({ ...currentDebt, category: e.target.value })}
-                      className="w-full px-4 py-2 bg-slate-700 text-white rounded border border-slate-600 focus:border-blue-500 focus:outline-none"
-                    >
-                      <option value="">בחר סוג חוב</option>
-                      {DEBT_TYPES.map((type) => (
-                        <option key={type.value} value={type.value}>
-                          {type.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-slate-300 mb-2">סכום חוב (₪)</label>
-                      <input
-                        type="number"
-                        value={currentDebt.amount || ''}
-                        onChange={(e) => setCurrentDebt({ ...currentDebt, amount: parseFloat(e.target.value) || 0 })}
-                        className="w-full px-4 py-2 bg-slate-700 text-white rounded border border-slate-600 focus:border-blue-500 focus:outline-none"
-                        placeholder="0"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-slate-300 mb-2">שם הנושה</label>
-                      <input
-                        type="text"
-                        value={currentDebt.creditorName || ''}
-                        onChange={(e) => setCurrentDebt({ ...currentDebt, creditorName: e.target.value })}
-                        className="w-full px-4 py-2 bg-slate-700 text-white rounded border border-slate-600 focus:border-blue-500 focus:outline-none"
-                        placeholder="שם הנושה"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-slate-300 mb-2">ודאות</label>
-                      <select
-                        value={currentDebt.certainty || 'known'}
-                        onChange={(e) => setCurrentDebt({ ...currentDebt, certainty: e.target.value as any })}
-                        className="w-full px-4 py-2 bg-slate-700 text-white rounded border border-slate-600 focus:border-blue-500 focus:outline-none"
+                      <button
+                        onClick={() => handleRemoveDebt(debt.id)}
+                        className="text-red-400 hover:text-red-300"
                       >
-                        <option value="known">ידוע</option>
-                        <option value="estimated">משוער</option>
-                        <option value="missing">חסר</option>
-                      </select>
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium text-slate-300 mb-2">דחיפות</label>
-                      <select
-                        value={currentDebt.urgency || 'medium'}
-                        onChange={(e) => setCurrentDebt({ ...currentDebt, urgency: e.target.value as any })}
-                        className="w-full px-4 py-2 bg-slate-700 text-white rounded border border-slate-600 focus:border-blue-500 focus:outline-none"
-                      >
-                        <option value="immediate">מיידית</option>
-                        <option value="medium">בינונית</option>
-                        <option value="low">נמוכה</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-slate-300 mb-2">ריביות (%)</label>
-                      <input
-                        type="number"
-                        value={currentDebt.interestRate || ''}
-                        onChange={(e) => setCurrentDebt({ ...currentDebt, interestRate: parseFloat(e.target.value) || 0 })}
-                        className="w-full px-4 py-2 bg-slate-700 text-white rounded border border-slate-600 focus:border-blue-500 focus:outline-none"
-                        placeholder="0"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-slate-300 mb-2">תאריך התחלה</label>
-                      <input
-                        type="date"
-                        value={currentDebt.debtStartDate || ''}
-                        onChange={(e) => setCurrentDebt({ ...currentDebt, debtStartDate: e.target.value })}
-                        className="w-full px-4 py-2 bg-slate-700 text-white rounded border border-slate-600 focus:border-blue-500 focus:outline-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-slate-300 mb-2">מצב תשלומים</label>
-                      <select
-                        value={currentDebt.paymentStatus || 'current'}
-                        onChange={(e) => setCurrentDebt({ ...currentDebt, paymentStatus: e.target.value as any })}
-                        className="w-full px-4 py-2 bg-slate-700 text-white rounded border border-slate-600 focus:border-blue-500 focus:outline-none"
-                      >
-                        <option value="current">עדכני</option>
-                        <option value="late">בעיכוב</option>
-                        <option value="defaulted">בחדלות</option>
-                        <option value="enforcement">הוצל"פ</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <Button onClick={addDebt} className="w-full bg-green-600 hover:bg-green-700 text-white">
-                    <Plus className="w-4 h-4 ml-2" />
-                    הוסף חוב
-                  </Button>
-                </div>
-
-                {/* Debts List */}
-                {formData.debts.length > 0 && (
-                  <div className="space-y-3">
-                    <h3 className="text-lg font-semibold text-white">חובות שנוספו ({formData.debts.length})</h3>
-                    {formData.debts.map((debt) => (
-                      <div key={debt.id} className="bg-slate-700/50 p-4 rounded flex justify-between items-start">
-                        <div>
-                          <p className="font-medium text-white">
-                            {DEBT_TYPES.find((t) => t.value === debt.category)?.label} - {debt.creditorName}
-                          </p>
-                          <p className="text-slate-400 text-sm">₪{debt.amount.toLocaleString('he-IL')} • {debt.urgency}</p>
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeDebt(debt.id)}
-                          className="text-red-400 hover:text-red-300"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Step 4: Additional Information */}
-            {step === 4 && (
-              <div className="space-y-4">
-                <div className="space-y-3">
-                  <label className="flex items-center gap-3 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={formData.hasEnforcement}
-                      onChange={(e) => setFormData({ ...formData, hasEnforcement: e.target.checked })}
-                      className="w-4 h-4"
-                    />
-                    <span className="text-slate-300">יש הוצל"פ פעיל</span>
-                  </label>
-                  <label className="flex items-center gap-3 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={formData.hasWarningLetters}
-                      onChange={(e) => setFormData({ ...formData, hasWarningLetters: e.target.checked })}
-                      className="w-4 h-4"
-                    />
-                    <span className="text-slate-300">יש מכתבי התראה</span>
-                  </label>
-                  <label className="flex items-center gap-3 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={formData.previousNegotiations}
-                      onChange={(e) => setFormData({ ...formData, previousNegotiations: e.target.checked })}
-                      className="w-4 h-4"
-                    />
-                    <span className="text-slate-300">ניסיונות משא ומתן קודמים עם נושים</span>
-                  </label>
-                  <label className="flex items-center gap-3 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={formData.needsLegalHelp}
-                      onChange={(e) => setFormData({ ...formData, needsLegalHelp: e.target.checked })}
-                      className="w-4 h-4"
-                    />
-                    <span className="text-slate-300">צריך עזרה משפטית</span>
-                  </label>
+                  ))}
                 </div>
               </div>
             )}
+          </div>
+        )}
 
-            {/* Step 5: Summary */}
-            {step === 5 && (
-              <div className="space-y-6">
-                {/* Risk Level */}
-                <div className={`p-6 rounded-lg ${riskLevel.color}`}>
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-2xl font-bold">{riskLevel.label}</h3>
-                    <span className="text-3xl font-bold">{formData.totalRisk}/400</span>
-                  </div>
-                  <p className="text-sm">{riskLevel.description}</p>
-                </div>
+        {/* Step 4: Additional */}
+        {step === 4 && (
+          <div className="bg-slate-800 rounded-lg p-6 space-y-4">
+            <h2 className="text-2xl font-bold text-white mb-6">מידע נוסף</h2>
+            <label className="flex items-center space-x-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={formData.hasEnforcement}
+                onChange={(e) => setFormData({...formData, hasEnforcement: e.target.checked})}
+                className="w-4 h-4"
+              />
+              <span className="text-white">יש הליכי הוצאה לפועל</span>
+            </label>
+            <label className="flex items-center space-x-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={formData.hasLetters}
+                onChange={(e) => setFormData({...formData, hasLetters: e.target.checked})}
+                className="w-4 h-4"
+              />
+              <span className="text-white">קיבלתי מכתבים מנושים</span>
+            </label>
+            <label className="flex items-center space-x-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={formData.hasNegotiation}
+                onChange={(e) => setFormData({...formData, hasNegotiation: e.target.checked})}
+                className="w-4 h-4"
+              />
+              <span className="text-white">ניסיתי משא ומתן עם נושים</span>
+            </label>
+            <label className="flex items-center space-x-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={formData.hasLawyer}
+                onChange={(e) => setFormData({...formData, hasLawyer: e.target.checked})}
+                className="w-4 h-4"
+              />
+              <span className="text-white">יש לי עורך דין</span>
+            </label>
+          </div>
+        )}
 
-                {/* Summary Cards */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-slate-700/50 p-4 rounded">
-                    <p className="text-slate-400 text-sm">סה"כ חוב</p>
-                    <p className="text-2xl font-bold text-white">₪{formData.totalAmount.toLocaleString('he-IL')}</p>
-                  </div>
-                  <div className="bg-slate-700/50 p-4 rounded">
-                    <p className="text-slate-400 text-sm">מספר נושים</p>
-                    <p className="text-2xl font-bold text-white">{formData.debts.length}</p>
-                  </div>
-                  <div className="bg-slate-700/50 p-4 rounded">
-                    <p className="text-slate-400 text-sm">הכנסה חודשית</p>
-                    <p className="text-2xl font-bold text-white">₪{formData.monthlyIncome.toLocaleString('he-IL')}</p>
-                  </div>
-                  <div className="bg-slate-700/50 p-4 rounded">
-                    <p className="text-slate-400 text-sm">זמין לחוב</p>
-                    <p className="text-2xl font-bold text-green-400">
-                      ₪{Math.max(0, formData.monthlyIncome - formData.monthlyExpenses).toLocaleString('he-IL')}
-                    </p>
-                  </div>
-                </div>
+        {/* Step 5: Summary */}
+        {step === 5 && (
+          <div className="bg-slate-800 rounded-lg p-6 space-y-4">
+            <h2 className="text-2xl font-bold text-white mb-6">סיכום האבחון</h2>
+            <div className="bg-slate-700/50 p-4 rounded">
+              <p className="text-slate-300 text-sm">ניקוד סיכום: {calculateTotalRisk()}/400</p>
+              <p className="text-white font-semibold">פרסונה: {getPersona(calculateTotalRisk())}</p>
+            </div>
+          </div>
+        )}
 
-                {/* Status Badges */}
-                <div className="flex gap-2 flex-wrap">
-                  {formData.hasEnforcement && (
-                    <div className="bg-red-500/20 text-red-300 px-3 py-1 rounded text-sm flex items-center gap-2">
-                      <AlertCircle className="w-4 h-4" />
-                      הוצל"פ פעיל
-                    </div>
-                  )}
-                  {formData.hasWarningLetters && (
-                    <div className="bg-orange-500/20 text-orange-300 px-3 py-1 rounded text-sm flex items-center gap-2">
-                      <AlertCircle className="w-4 h-4" />
-                      מכתבי התראה
-                    </div>
-                  )}
-                  {formData.previousNegotiations && (
-                    <div className="bg-blue-500/20 text-blue-300 px-3 py-1 rounded text-sm flex items-center gap-2">
-                      <CheckCircle className="w-4 h-4" />
-                      משא ומתן קודם
-                    </div>
-                  )}
-                  {formData.needsLegalHelp && (
-                    <div className="bg-purple-500/20 text-purple-300 px-3 py-1 rounded text-sm flex items-center gap-2">
-                      <AlertCircle className="w-4 h-4" />
-                      צריך עזרה משפטית
-                    </div>
-                  )}
-                </div>
-
-                {/* Recommendations */}
-                <div className="bg-slate-700/50 p-4 rounded space-y-3">
-                  <h4 className="font-semibold text-white">המלצות:</h4>
-                  <ul className="space-y-2 text-slate-300 text-sm">
-                    {riskLevel.label === 'Yossi' && (
-                      <>
-                        <li>• בקש ייעוץ משפטי מיידי</li>
-                        <li>• התחל משא ומתן עם נושים</li>
-                        <li>• שקול פתרונות משפטיים (פשיטת רגל, הסדר)</li>
-                      </>
-                    )}
-                    {riskLevel.label === 'Dana' && (
-                      <>
-                        <li>• בקש ייעוץ כלכלי</li>
-                        <li>• צור תוכנית פירעון</li>
-                        <li>• התחל משא ומתן עם נושים</li>
-                      </>
-                    )}
-                    {riskLevel.label === 'Avi' && (
-                      <>
-                        <li>• צור תוכנית פעולה</li>
-                        <li>• הקטן הוצאות</li>
-                        <li>• הגדל הכנסה</li>
-                      </>
-                    )}
-                    {riskLevel.label === 'Green' && (
-                      <>
-                        <li>• המשך בתשלומים הנוכחיים</li>
-                        <li>• בנה קרן חירום</li>
-                        <li>• שמור על מצב כלכלי יציב</li>
-                      </>
-                    )}
-                  </ul>
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Navigation Buttons */}
-        <div className="flex gap-4 justify-between">
-          <Button
-            onClick={handleBack}
-            variant="outline"
-            className="text-slate-300 border-slate-600 hover:bg-slate-700"
-            disabled={step === 1}
-          >
-            חזור
-          </Button>
+        {/* Navigation buttons */}
+        <div className="flex gap-3 mt-8">
+          {step > 1 && (
+            <button
+              type="button"
+              onClick={handlePrev}
+              className="flex-1 bg-slate-700 hover:bg-slate-600 text-white p-3 rounded font-semibold transition-colors flex items-center justify-center gap-2"
+            >
+              <ArrowLeft className="w-5 h-5" />
+              חזור
+            </button>
+          )}
           {step < 5 ? (
-            <Button
+            <button
+              type="button"
               onClick={handleNext}
-              className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2"
+              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white p-3 rounded font-semibold transition-colors flex items-center justify-center gap-2"
             >
               הבא
-              <ArrowRight className="w-4 h-4" />
-            </Button>
+              <ArrowRight className="w-5 h-5" />
+            </button>
           ) : (
-            <Button
+            <button
+              type="button"
               onClick={handleSubmit}
-              disabled={saveMutation.isPending}
-              className="bg-green-600 hover:bg-green-700 text-white"
+              className="flex-1 bg-green-600 hover:bg-green-700 text-white p-3 rounded font-semibold transition-colors"
             >
-              {saveMutation.isPending ? 'שומר...' : 'סיים אבחון'}
-            </Button>
+              סיים אבחון
+            </button>
           )}
         </div>
       </div>
-    </DashboardLayout>
+    </div>
   );
 }

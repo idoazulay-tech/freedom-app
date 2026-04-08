@@ -10,13 +10,13 @@ import Dashboard from './pages/Dashboard';
 import TriageWizard from './pages/TriageWizard';
 import ProfessionalDiagnosis from './pages/ProfessionalDiagnosis';
 import Diagnosis from './pages/Diagnosis';
-import Profile from './pages/Profile';
 import Letters from './pages/Letters';
 import Calculator from './pages/Calculator';
 import DebtTracker from './pages/DebtTracker';
 import DocumentScanner from './pages/DocumentScanner';
 import Lawyers from './pages/Lawyers';
 import ProHub from './pages/ProHub';
+import Profile from './pages/Profile';
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
@@ -27,13 +27,14 @@ function Router() {
       <Route path={"/triage"} component={TriageWizard} />
       <Route path={"/diagnosis-professional"} component={ProfessionalDiagnosis} />
       <Route path={"/diagnosis"} component={Diagnosis} />
-      <Route path={"/profile"} component={Profile} />
+
       <Route path={"/letters"} component={Letters} />
       <Route path={"/calculator"} component={Calculator} />
       <Route path={"/tracker"} component={DebtTracker} />
       <Route path={"/scanner"} component={DocumentScanner} />
       <Route path={"/lawyers"} component={Lawyers} />
       <Route path={"/pro-hub"} component={ProHub} />
+      <Route path={"/profile"} component={Profile} />
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />
