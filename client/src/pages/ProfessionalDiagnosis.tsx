@@ -249,20 +249,23 @@ export default function ProfessionalDiagnosis() {
   };
 
   // Save Draft functionality
-  const handleSaveDraft = async () => {
-    try {
-      // Save to localStorage
-      localStorage.setItem('diagnosis_draft', JSON.stringify({
-        formData,
-        currentStep: step,
-        timestamp: new Date().toISOString()
-      }));
-      toast.success('הטיוטה נשמרה בהצלחה');
-    } catch (error) {
-      console.error('Error saving draft:', error);
-      toast.error('שגיאה בשמירת הטיוטה');
-    }
-  };
+  // Auto-save to localStorage whenever formData or step changes
+  useEffect(() => {
+    const autoSave = () => {
+      try {
+        localStorage.setItem('diagnosis_draft', JSON.stringify({
+          formData,
+          currentStep: step,
+          timestamp: new Date().toISOString()
+        }));
+      } catch (error) {
+        console.error('Error auto-saving draft:', error);
+      }
+    };
+    
+    const timer = setTimeout(autoSave, 500);
+    return () => clearTimeout(timer);
+  }, [formData, step]);
 
   // Load Draft on mount
   useEffect(() => {
@@ -270,13 +273,46 @@ export default function ProfessionalDiagnosis() {
     if (draft) {
       try {
         const { formData: draftData, currentStep: draftStep } = JSON.parse(draft);
-        // Optional: Ask user if they want to load draft
-        // For now, we'll just make it available
+        setFormData(draftData);
+        setStep(draftStep);
       } catch (error) {
         console.error('Error loading draft:', error);
       }
     }
   }, []);
+
+  // Delete Draft
+  const handleDeleteDraft = () => {
+    if (window.confirm('האם אתה בטוח שאתה רוצה למחוק את הטיוטה? זה לא ניתן לשחזור.')) {
+      try {
+        localStorage.removeItem('diagnosis_draft');
+        setFormData({
+          fullName: '',
+          phone: '',
+          email: '',
+          maritalStatus: '',
+          dependents: 0,
+          monthlyIncome: 0,
+          incomeStability: '',
+          expensesMode: 'total',
+          totalExpenses: 0,
+          expenses: {},
+          debts: [],
+          hasEnforcement: false,
+          hasLetters: false,
+          hasNegotiation: false,
+          hasLawyer: false,
+          totalRisk: 0,
+          persona: '',
+        });
+        setStep(1);
+        toast.success('הטיוטה נמחקה בהצלחה');
+      } catch (error) {
+        console.error('Error deleting draft:', error);
+        toast.error('שגיאה במחיקת הטיוטה');
+      }
+    }
+  };
 
   // Help text for each field
   const helpTexts = {
@@ -955,10 +991,10 @@ export default function ProfessionalDiagnosis() {
           </button>
 
           <button
-            onClick={handleSaveDraft}
-            className="flex-1 bg-slate-600 hover:bg-slate-500 text-white p-3 rounded font-semibold transition-colors"
+            onClick={handleDeleteDraft}
+            className="flex-1 bg-red-600 hover:bg-red-700 text-white p-3 rounded font-semibold transition-colors"
           >
-            שמור טיוטה
+            מחק טיוטה
           </button>
 
           {step < 5 ? (
