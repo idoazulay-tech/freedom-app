@@ -5,6 +5,7 @@ import { useLocation } from 'wouter';
 import { toast } from 'sonner';
 import { ArrowRight, ArrowLeft, Trash2, Edit2, X, ChevronDown } from 'lucide-react';
 import { trpc } from '@/lib/trpc';
+import { CREDITORS_BY_CATEGORY } from '@shared/creditors';
 
 interface Debt {
   id: string;
@@ -62,6 +63,29 @@ export default function ProfessionalDiagnosis() {
   const [step, setStep] = useState(1);
   const [editingDebtId, setEditingDebtId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  
+  // Validation function
+  const validateField = (field: string, value: any): string => {
+    switch (field) {
+      case 'fullName':
+        return !value?.trim() ? 'שם מלא הוא שדה חובה' : '';
+      case 'phone':
+        return !value?.trim() ? 'מספר טלפון הוא שדה חובה' : '';
+      case 'email':
+        return !value?.trim() ? 'אימייל הוא שדה חובה' : !value.includes('@') ? 'אימייל לא תקין' : '';
+      case 'monthlyIncome':
+        return value <= 0 ? 'הכנסה חודשית חייבת להיות גדולה מ-0' : '';
+      case 'category':
+        return !value ? 'סוג החוב הוא שדה חובה' : '';
+      case 'creditorName':
+        return !value ? 'שם הנושה הוא שדה חובה' : '';
+      case 'amount':
+        return value <= 0 ? 'סכום החוב חייב להיות גדול מ-0' : '';
+      default:
+        return '';
+    }
+  };
   
   // Mutation for saving diagnosis
   const saveDiagnosisMutation = trpc.diagnosis.save.useMutation({
@@ -360,9 +384,16 @@ export default function ProfessionalDiagnosis() {
                 type="text"
                 placeholder="לדוגמה: דוד כהן"
                 value={formData.fullName}
-                onChange={(e) => setFormData({...formData, fullName: e.target.value})}
-                className="w-full bg-slate-700 text-white p-3 rounded border border-slate-600 focus:border-blue-500 outline-none"
+                onChange={(e) => {
+                  setFormData({...formData, fullName: e.target.value});
+                  const error = validateField('fullName', e.target.value);
+                  setErrors(prev => ({ ...prev, fullName: error }));
+                }}
+                className={`w-full bg-slate-700 text-white p-3 rounded border outline-none ${
+                  errors.fullName ? 'border-red-500 focus:border-red-500' : 'border-slate-600 focus:border-blue-500'
+                }`}
               />
+              {errors.fullName && <p className="text-red-400 text-xs mt-1">{errors.fullName}</p>}
             </div>
             <div>
               <label className="block text-slate-300 text-sm mb-2">טלפון *</label>
@@ -370,9 +401,16 @@ export default function ProfessionalDiagnosis() {
                 type="tel"
                 placeholder="050-1234567"
                 value={formData.phone}
-                onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                className="w-full bg-slate-700 text-white p-3 rounded border border-slate-600 focus:border-blue-500 outline-none"
+                onChange={(e) => {
+                  setFormData({...formData, phone: e.target.value});
+                  const error = validateField('phone', e.target.value);
+                  setErrors(prev => ({ ...prev, phone: error }));
+                }}
+                className={`w-full bg-slate-700 text-white p-3 rounded border outline-none ${
+                  errors.phone ? 'border-red-500 focus:border-red-500' : 'border-slate-600 focus:border-blue-500'
+                }`}
               />
+              {errors.phone && <p className="text-red-400 text-xs mt-1">{errors.phone}</p>}
             </div>
             <div>
               <label className="block text-slate-300 text-sm mb-2">אימייל *</label>
@@ -380,9 +418,16 @@ export default function ProfessionalDiagnosis() {
                 type="email"
                 placeholder="user@example.com"
                 value={formData.email}
-                onChange={(e) => setFormData({...formData, email: e.target.value})}
-                className="w-full bg-slate-700 text-white p-3 rounded border border-slate-600 focus:border-blue-500 outline-none"
+                onChange={(e) => {
+                  setFormData({...formData, email: e.target.value});
+                  const error = validateField('email', e.target.value);
+                  setErrors(prev => ({ ...prev, email: error }));
+                }}
+                className={`w-full bg-slate-700 text-white p-3 rounded border outline-none ${
+                  errors.email ? 'border-red-500 focus:border-red-500' : 'border-slate-600 focus:border-blue-500'
+                }`}
               />
+              {errors.email && <p className="text-red-400 text-xs mt-1">{errors.email}</p>}
             </div>
             <div>
               <label className="block text-slate-300 text-sm mb-2">מצב משפחתי</label>
@@ -417,15 +462,23 @@ export default function ProfessionalDiagnosis() {
             <h2 className="text-2xl font-bold text-white mb-6">מצב כלכלי</h2>
             
             <div>
-              <label className="block text-slate-300 text-sm mb-2">הכנסה חודשית *</label>
+              <label className="block text-slate-300 text-sm mb-2">הכנסה חדשית *</label>
               <input
                 type="number"
                 min="0"
                 value={formData.monthlyIncome}
-                onChange={(e) => setFormData({...formData, monthlyIncome: parseInt(e.target.value) || 0})}
-                className="w-full bg-slate-700 text-white p-3 rounded border border-slate-600 focus:border-blue-500 outline-none"
+                onChange={(e) => {
+                  const value = parseInt(e.target.value) || 0;
+                  setFormData({...formData, monthlyIncome: value});
+                  const error = validateField('monthlyIncome', value);
+                  setErrors(prev => ({ ...prev, monthlyIncome: error }));
+                }}
+                className={`w-full bg-slate-700 text-white p-3 rounded border outline-none ${
+                  errors.monthlyIncome ? 'border-red-500 focus:border-red-500' : 'border-slate-600 focus:border-blue-500'
+                }`}
                 placeholder="לדוגמה: 10000"
               />
+              {errors.monthlyIncome && <p className="text-red-400 text-xs mt-1">{errors.monthlyIncome}</p>}
             </div>
 
             <div>
@@ -550,13 +603,22 @@ export default function ProfessionalDiagnosis() {
             {/* Creditor Name */}
             <div>
               <label className="block text-slate-300 text-sm mb-2">שם הנושה *</label>
-              <input
-                type="text"
-                placeholder="לדוגמה: בנק הפועלים"
+              <select
                 value={currentDebt.creditorName || ''}
                 onChange={(e) => setCurrentDebt(prev => ({...prev, creditorName: e.target.value}))}
                 className="w-full bg-slate-700 text-white p-3 rounded border border-slate-600 focus:border-blue-500 outline-none"
-              />
+              >
+                <option value="">בחר נושה...</option>
+                {currentDebt.category && CREDITORS_BY_CATEGORY[currentDebt.category as keyof typeof CREDITORS_BY_CATEGORY]?.map(creditor => (
+                  <option key={creditor.id} value={creditor.hebrewName}>
+                    {creditor.hebrewName}
+                  </option>
+                ))}
+                <option value="אחר">אחר (הקלד ידנית)</option>
+              </select>
+              {!currentDebt.category && (
+                <p className="text-yellow-400 text-xs mt-1">בחר סוג חוב קודם כדי לראות רשימת נושים</p>
+              )}
             </div>
 
             {/* Debt Amount */}
@@ -567,9 +629,17 @@ export default function ProfessionalDiagnosis() {
                 min="0"
                 placeholder="לדוגמה: 25000"
                 value={currentDebt.amount && currentDebt.amount > 0 ? currentDebt.amount : ''}
-                onChange={(e) => setCurrentDebt(prev => ({...prev, amount: parseInt(e.target.value) || 0}))}
-                className="w-full bg-slate-700 text-white p-3 rounded border border-slate-600 focus:border-blue-500 outline-none"
+                onChange={(e) => {
+                  const value = parseInt(e.target.value) || 0;
+                  setCurrentDebt(prev => ({...prev, amount: value}));
+                  const error = validateField('amount', value);
+                  setErrors(prev => ({ ...prev, debtAmount: error }));
+                }}
+                className={`w-full bg-slate-700 text-white p-3 rounded border outline-none ${
+                  errors.debtAmount ? 'border-red-500 focus:border-red-500' : 'border-slate-600 focus:border-blue-500'
+                }`}
               />
+              {errors.debtAmount && <p className="text-red-400 text-xs mt-1">{errors.debtAmount}</p>}
             </div>
 
             {/* Interest Rate */}
