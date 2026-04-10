@@ -248,6 +248,61 @@ export default function ProfessionalDiagnosis() {
     setEditingDebtId(null);
   };
 
+  // Save Draft functionality
+  const handleSaveDraft = async () => {
+    try {
+      // Save to localStorage
+      localStorage.setItem('diagnosis_draft', JSON.stringify({
+        formData,
+        currentStep: step,
+        timestamp: new Date().toISOString()
+      }));
+      toast.success('הטיוטה נשמרה בהצלחה');
+    } catch (error) {
+      console.error('Error saving draft:', error);
+      toast.error('שגיאה בשמירת הטיוטה');
+    }
+  };
+
+  // Load Draft on mount
+  useEffect(() => {
+    const draft = localStorage.getItem('diagnosis_draft');
+    if (draft) {
+      try {
+        const { formData: draftData, currentStep: draftStep } = JSON.parse(draft);
+        // Optional: Ask user if they want to load draft
+        // For now, we'll just make it available
+      } catch (error) {
+        console.error('Error loading draft:', error);
+      }
+    }
+  }, []);
+
+  // Help text for each field
+  const helpTexts = {
+    fullName: 'שם מלא כפי שמופיע בתעודה זהות',
+    phone: 'מספר טלפון שניתן ליצור איתך קשר',
+    email: 'כתובת אימייל לקבלת עדכונים ודוחות',
+    monthlyIncome: 'הכנסה ברוטו חודשית (לפני מסים)',
+    incomeStability: 'עד כמה יציבה ההכנסה שלך',
+    totalExpenses: 'סה"כ הוצאות חודשיות',
+    debtAmount: 'סכום החוב הכולל שעדיין חייב',
+    interest: 'ריבית שנתית שאתה משלם על החוב',
+    certainty: 'כמה בטוח אתה בנתון זה (ידוע = מדויק, בינוני = בערך, לא בטוח = הערכה)',
+    urgency: 'כמה דחוף החוב הזה (מיידי = צריך לטפל מיד, בינוני = בחודשים הקרובים)',
+    paymentStatus: 'מה הסטטוס הנוכחי של החוב (פעיל = משלם בזמן, בעיכוב = מאחר בתשלומים)',
+  };
+
+  // Help Icon Component
+  const HelpIcon = ({ field }: { field: keyof typeof helpTexts }) => (
+    <div className="group relative inline-block ml-2">
+      <span className="text-slate-400 hover:text-blue-400 cursor-help text-sm">?</span>
+      <div className="invisible group-hover:visible absolute bottom-full left-0 mb-2 w-48 bg-slate-700 text-slate-100 text-xs rounded p-2 shadow-lg z-10 border border-slate-600">
+        {helpTexts[field]}
+      </div>
+    </div>
+  );
+
   const handleSubmit = async () => {
     // Validation
     if (!formData.fullName.trim()) {
@@ -379,7 +434,10 @@ export default function ProfessionalDiagnosis() {
           <div className="bg-slate-800 rounded-lg p-6 space-y-4">
             <h2 className="text-2xl font-bold text-white mb-6">זהות</h2>
             <div>
-              <label className="block text-slate-300 text-sm mb-2">שם מלא *</label>
+              <label className="block text-slate-300 text-sm mb-2 flex items-center">
+                שם מלא *
+                <HelpIcon field="fullName" />
+              </label>
               <input
                 type="text"
                 placeholder="לדוגמה: דוד כהן"
@@ -396,7 +454,10 @@ export default function ProfessionalDiagnosis() {
               {errors.fullName && <p className="text-red-400 text-xs mt-1">{errors.fullName}</p>}
             </div>
             <div>
-              <label className="block text-slate-300 text-sm mb-2">טלפון *</label>
+              <label className="block text-slate-300 text-sm mb-2 flex items-center">
+                טלפון *
+                <HelpIcon field="phone" />
+              </label>
               <input
                 type="tel"
                 placeholder="050-1234567"
@@ -413,7 +474,10 @@ export default function ProfessionalDiagnosis() {
               {errors.phone && <p className="text-red-400 text-xs mt-1">{errors.phone}</p>}
             </div>
             <div>
-              <label className="block text-slate-300 text-sm mb-2">אימייל *</label>
+              <label className="block text-slate-300 text-sm mb-2 flex items-center">
+                אימייל *
+                <HelpIcon field="email" />
+              </label>
               <input
                 type="email"
                 placeholder="user@example.com"
@@ -462,7 +526,10 @@ export default function ProfessionalDiagnosis() {
             <h2 className="text-2xl font-bold text-white mb-6">מצב כלכלי</h2>
             
             <div>
-              <label className="block text-slate-300 text-sm mb-2">הכנסה חדשית *</label>
+              <label className="block text-slate-300 text-sm mb-2 flex items-center">
+                הכנסה חדשית *
+                <HelpIcon field="monthlyIncome" />
+              </label>
               <input
                 type="number"
                 min="0"
@@ -526,7 +593,10 @@ export default function ProfessionalDiagnosis() {
               {/* Mode 1: Total Expenses */}
               {formData.expensesMode === 'total' && (
                 <div>
-                  <label className="block text-slate-300 text-sm mb-2">סך הוצאות חודשיות *</label>
+                  <label className="block text-slate-300 text-sm mb-2 flex items-center">
+                    סך הוצאות חדשיות *
+                    <HelpIcon field="totalExpenses" />
+                  </label>
                   <input
                     type="number"
                     min="0"
@@ -623,7 +693,10 @@ export default function ProfessionalDiagnosis() {
 
             {/* Debt Amount */}
             <div>
-              <label className="block text-slate-300 text-sm mb-2">סכום החוב (בש"ח) *</label>
+              <label className="block text-slate-300 text-sm mb-2 flex items-center">
+                סכום החוב (בש"ח) *
+                <HelpIcon field="debtAmount" />
+              </label>
               <input
                 type="number"
                 min="0"
@@ -644,7 +717,10 @@ export default function ProfessionalDiagnosis() {
 
             {/* Interest Rate */}
             <div>
-              <label className="block text-slate-300 text-sm mb-2">ריבית שנתית (%) - אופציונלי</label>
+              <label className="block text-slate-300 text-sm mb-2 flex items-center">
+                ריבית שנתית (%) - אופציונלי
+                <HelpIcon field="interest" />
+              </label>
               <input
                 type="number"
                 min="0"
@@ -658,7 +734,10 @@ export default function ProfessionalDiagnosis() {
 
             {/* Question 1: Certainty */}
             <div>
-              <label className="block text-slate-300 text-sm mb-2">כמה בטוח אתה בנתונים האלה?</label>
+              <label className="block text-slate-300 text-sm mb-2 flex items-center">
+                כמה בטוח אתה בנתונים אלה?
+                <HelpIcon field="certainty" />
+              </label>
               <select
                 value={currentDebt.certainty || 'known'}
                 onChange={(e) => setCurrentDebt(prev => ({...prev, certainty: e.target.value as any}))}
@@ -672,7 +751,10 @@ export default function ProfessionalDiagnosis() {
 
             {/* Question 2: Last Update */}
             <div>
-              <label className="block text-slate-300 text-sm mb-2">מתי עדכנת את הנתונים לאחרונה?</label>
+              <label className="block text-slate-300 text-sm mb-2 flex items-center">
+                מתי עדכנת את הנתונים לאחרונה?
+                <HelpIcon field="urgency" />
+              </label>
               <select
                 value={currentDebt.urgency || 'medium'}
                 onChange={(e) => setCurrentDebt(prev => ({...prev, urgency: e.target.value as any}))}
@@ -686,7 +768,10 @@ export default function ProfessionalDiagnosis() {
 
             {/* Question 3: Status */}
             <div>
-              <label className="block text-slate-300 text-sm mb-2">מה סטטוס החוב הזה כרגע?</label>
+              <label className="block text-slate-300 text-sm mb-2 flex items-center">
+                מה סטטוס החוב הזה כרגע?
+                <HelpIcon field="paymentStatus" />
+              </label>
               <select
                 value={currentDebt.paymentStatus || 'current'}
                 onChange={(e) => setCurrentDebt(prev => ({...prev, paymentStatus: e.target.value as any}))}
@@ -867,6 +952,13 @@ export default function ProfessionalDiagnosis() {
           >
             <ArrowRight className="w-4 h-4" />
             חזור
+          </button>
+
+          <button
+            onClick={handleSaveDraft}
+            className="flex-1 bg-slate-600 hover:bg-slate-500 text-white p-3 rounded font-semibold transition-colors"
+          >
+            שמור טיוטה
           </button>
 
           {step < 5 ? (
