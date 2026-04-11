@@ -33,9 +33,9 @@ export default function TasksSection({ diagnosis }: { diagnosis?: DiagnosisData 
   const [tasks, setTasks] = useState<Task[]>([]);
 
   // Fetch generated tasks from server (server generates based on stored diagnosis)
-  const { data: generatedTasksData, isPending } = (trpc.diagnosis as any).generateTasks.useQuery();
+  const { data: generatedTasksData, isLoading: isPending } = (trpc.diagnosis as any).generateTasks.useQuery();
   
-  // Generate tasks on mount - use useEffect to fetch
+  // Generate tasks on mount - useQuery fetches automatically
   useEffect(() => {
     // Tasks will be fetched automatically by useQuery
   }, []);

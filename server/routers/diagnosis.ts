@@ -319,7 +319,7 @@ export const diagnosisRouter = router({
     }),
 
   // Tasks procedures
-  generateTasks: protectedProcedure.mutation(async ({ ctx }) => {
+  generateTasks: protectedProcedure.query(async ({ ctx }) => {
     const db = await getDb();
     if (!db) return [];
     
