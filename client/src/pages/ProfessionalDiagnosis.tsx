@@ -132,6 +132,32 @@ export default function ProfessionalDiagnosis() {
 
   // Step handlers
   const handleNext = () => {
+    // Validate required fields before moving to next step
+    if (step === 1) {
+      if (!formData.fullName.trim()) {
+        toast.error('אנא הזן שם מלא');
+        return;
+      }
+      if (!formData.phone.trim()) {
+        toast.error('אנא הזן מספר טלפון');
+        return;
+      }
+      if (!formData.email.trim()) {
+        toast.error('אנא הזן כתובת אימייל');
+        return;
+      }
+    } else if (step === 2) {
+      if (formData.monthlyIncome <= 0) {
+        toast.error('אנא הזן הכנסה חודשית');
+        return;
+      }
+    } else if (step === 3) {
+      if (formData.debts.length === 0) {
+        toast.error('אנא הוסף לפחות חוב אחד בטופס');
+        return;
+      }
+    }
+    
     if (step < 5) {
       setStep(step + 1);
     }
@@ -471,7 +497,7 @@ export default function ProfessionalDiagnosis() {
             <h2 className="text-2xl font-bold text-white mb-6">זהות</h2>
             <div>
               <label className="block text-slate-300 text-sm mb-2 flex items-center">
-                שם מלא *
+                שם מלא <span className="text-red-500">*</span>
                 <HelpIcon field="fullName" />
               </label>
               <input
@@ -491,7 +517,7 @@ export default function ProfessionalDiagnosis() {
             </div>
             <div>
               <label className="block text-slate-300 text-sm mb-2 flex items-center">
-                טלפון *
+                טלפון <span className="text-red-500">*</span>
                 <HelpIcon field="phone" />
               </label>
               <input
@@ -511,7 +537,7 @@ export default function ProfessionalDiagnosis() {
             </div>
             <div>
               <label className="block text-slate-300 text-sm mb-2 flex items-center">
-                אימייל *
+                אימייל <span className="text-red-500">*</span>
                 <HelpIcon field="email" />
               </label>
               <input
@@ -563,7 +589,7 @@ export default function ProfessionalDiagnosis() {
             
             <div>
               <label className="block text-slate-300 text-sm mb-2 flex items-center">
-                הכנסה חדשית *
+                הכנסה חודשית <span className="text-red-500">*</span>
                 <HelpIcon field="monthlyIncome" />
               </label>
               <input
@@ -685,30 +711,27 @@ export default function ProfessionalDiagnosis() {
             
             {/* Debt Type */}
             <div>
-              <label className="block text-slate-300 text-sm mb-2">סוג החוב *</label>
+              <label className="block text-slate-300 text-sm mb-2">סוג החוב <span className="text-red-500">*</span></label>
               <select
                 value={currentDebt.category || ''}
                 onChange={(e) => setCurrentDebt(prev => ({...prev, category: e.target.value}))}
                 className="w-full bg-slate-700 text-white p-3 rounded border border-slate-600 focus:border-blue-500 outline-none"
               >
-                <option value="">בחר סוג חוב</option>
-                <option value="bank_loan">הלוואה מבנק</option>
-                <option value="credit_card_debt">חוב על כרטיס אשראי</option>
-                <option value="credit_company_loan">הלוואה מחברת אשראי</option>
-                <option value="credit_line_loan">הלוואה על מסגרת אשראי</option>
-                <option value="finance_company_loan">הלוואה מחברת מימון</option>
-                <option value="insurance_loan">הלוואה מחברת ביטוח</option>
-                <option value="private_debt">חוב פרטי</option>
-                <option value="lawyer_debt">חוב ממשרד עורכי דין</option>
-                <option value="government_debt">חוב לממשלה</option>
-                <option value="p2p_loan">הלוואה מבלנדר</option>
-                <option value="collection_debt">חוב בגבייה</option>
+                <option value="">בחר סוג חוב...</option>
+                <option value="bank">הלוואה מבנק</option>
+                <option value="credit_card">חוב על כרטיס אשראי</option>
+                <option value="finance_company">הלוואה מחברת מימון</option>
+                <option value="insurance">הלוואה מחברת ביטוח</option>
+                <option value="institutional">חוב מגופים מוסדיים</option>
+                <option value="p2p">הלוואה מבלנדר</option>
+                <option value="collection">חוב בגבייה</option>
+                <option value="">אחר</option>
               </select>
             </div>
 
             {/* Creditor Name */}
             <div>
-              <label className="block text-slate-300 text-sm mb-2">שם הנושה *</label>
+              <label className="block text-slate-300 text-sm mb-2">שם נושה <span className="text-red-500">*</span></label>
               <select
                 value={currentDebt.creditorName || ''}
                 onChange={(e) => setCurrentDebt(prev => ({...prev, creditorName: e.target.value}))}
@@ -730,14 +753,14 @@ export default function ProfessionalDiagnosis() {
             {/* Debt Amount */}
             <div>
               <label className="block text-slate-300 text-sm mb-2 flex items-center">
-                סכום החוב (בש"ח) *
+                סכום החוב (בש"ח) <span className="text-red-500">*</span>
                 <HelpIcon field="debtAmount" />
               </label>
               <input
                 type="number"
                 min="0"
                 placeholder="לדוגמה: 25000"
-                value={currentDebt.amount && currentDebt.amount > 0 ? currentDebt.amount : ''}
+                value={currentDebt.amount && (currentDebt.amount > 0) ? currentDebt.amount : ''}
                 onChange={(e) => {
                   const value = parseInt(e.target.value) || 0;
                   setCurrentDebt(prev => ({...prev, amount: value}));
@@ -762,7 +785,7 @@ export default function ProfessionalDiagnosis() {
                 min="0"
                 max="100"
                 placeholder="לדוגמה: 8.5"
-                value={currentDebt.interest && currentDebt.interest > 0 ? currentDebt.interest : ''}
+                value={currentDebt.interest && (currentDebt.interest > 0) ? currentDebt.interest : ''}
                 onChange={(e) => setCurrentDebt(prev => ({...prev, interest: parseInt(e.target.value) || 0}))}
                 className="w-full bg-slate-700 text-white p-3 rounded border border-slate-600 focus:border-blue-500 outline-none"
               />
@@ -979,8 +1002,13 @@ export default function ProfessionalDiagnosis() {
           </div>
         )}
 
+        {/* Required Fields Explanation */}
+        <div className="mt-8 mb-4 text-center">
+          <p className="text-slate-400 text-sm">שדות המסומנים ב-<span className="text-red-500">*</span> הם חובה להמשך האבחון</p>
+        </div>
+
         {/* Navigation Buttons */}
-        <div className="flex gap-4 mt-8">
+        <div className="flex gap-4 mt-4">
           <button
             onClick={handlePrev}
             disabled={step === 1}
