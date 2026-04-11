@@ -570,14 +570,28 @@ export default function ProfessionalDiagnosis() {
               </select>
             </div>
             <div>
-              <label className="block text-slate-300 text-sm mb-2">מספר בני משפחה</label>
-              <input
-                type="number"
-                min="0"
-                value={formData.dependents}
-                onChange={(e) => setFormData({...formData, dependents: parseInt(e.target.value) || 0})}
-                className="w-full bg-slate-700 text-white p-3 rounded border border-slate-600 focus:border-blue-500 outline-none"
-              />
+              <label className="block text-slate-300 text-sm mb-2 flex items-center">
+                <input
+                  type="checkbox"
+                  checked={formData.dependents > 0}
+                  onChange={(e) => setFormData({...formData, dependents: e.target.checked ? 1 : 0})}
+                  className="ml-2 w-4 h-4 cursor-pointer"
+                />
+                האם יש ילדים <span className="text-red-500">?</span>
+              </label>
+              {formData.dependents > 0 && (
+                <div className="mt-2">
+                  <label className="block text-slate-300 text-sm mb-2">כמה ילדים גרים איתך בבית <span className="text-red-500">*</span></label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={formData.dependents}
+                    onChange={(e) => setFormData({...formData, dependents: parseInt(e.target.value) || 1})}
+                    className="w-full bg-slate-700 text-white p-3 rounded border border-slate-600 focus:border-blue-500 outline-none"
+                    placeholder="לדוגמה: 2"
+                  />
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -794,7 +808,7 @@ export default function ProfessionalDiagnosis() {
             {/* Question 1: Certainty */}
             <div>
               <label className="block text-slate-300 text-sm mb-2 flex items-center">
-                כמה בטוח אתה בנתונים אלה?
+                כמה בטוח אתה בנתונים אלה <span className="text-red-500">?</span>
                 <HelpIcon field="certainty" />
               </label>
               <select
@@ -811,7 +825,7 @@ export default function ProfessionalDiagnosis() {
             {/* Question 2: Last Update */}
             <div>
               <label className="block text-slate-300 text-sm mb-2 flex items-center">
-                מתי עדכנת את הנתונים לאחרונה?
+                מתי עדכנת את הנתונים לאחרונה <span className="text-red-500">?</span>
                 <HelpIcon field="urgency" />
               </label>
               <select
@@ -828,7 +842,7 @@ export default function ProfessionalDiagnosis() {
             {/* Question 3: Status */}
             <div>
               <label className="block text-slate-300 text-sm mb-2 flex items-center">
-                מה סטטוס החוב הזה כרגע?
+                מה סטטוס החוב הזה כרגע <span className="text-red-500">?</span>
                 <HelpIcon field="paymentStatus" />
               </label>
               <select
