@@ -17,6 +17,10 @@ export async function createContext(
     user = await sdk.authenticateRequest(opts.req);
   } catch (error) {
     // Authentication is optional for public procedures.
+    // Log the error for debugging but don't throw
+    if (error instanceof Error) {
+      console.debug("[Auth] Request authentication failed:", error.message);
+    }
     user = null;
   }
 
