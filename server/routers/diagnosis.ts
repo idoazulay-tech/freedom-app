@@ -4,6 +4,7 @@ import { getDb } from "../db";
 import { diagnoses } from "../../drizzle/schema";
 import { eq } from "drizzle-orm";
 import { matchDebtorToProfessional } from "../ai/matching";
+import { notifyOwner } from "../_core/notification";
 
 // Mock professionals database
 const PROFESSIONALS = [
@@ -112,6 +113,16 @@ export const diagnosisRouter = router({
           debtsData: input.debtsData,
           actionsData: input.actionsData,
         });
+
+      // שלח הודעה למשתמש
+      try {
+        await notifyOwner({
+          title: `משתמש חדש השלים אבחון - סטטוס: ${input.riskLevel}`,
+          content: `משתמש ${ctx.user.id} השלים אבחון עם סכום חוב כולל: ₪${input.totalDebt}. הכנסה חודשית: ₪${input.monthlyIncome}. סטטוס סיכון: ${input.riskLevel}`,
+        });
+      } catch (error) {
+        console.warn('[Diagnosis] Failed to send notification:', error);
+      }
 
       return { success: true };
     }),

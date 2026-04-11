@@ -11,11 +11,20 @@ import AdvancedScoringSection from '@/components/AdvancedScoringSection';
 import TasksSection from '@/components/TasksSection';
 import DocumentsSection from '@/components/DocumentsSection';
 import NotificationsCenter from '@/components/NotificationsCenter';
+import DebtPrioritySection from '@/components/DebtPrioritySection';
+import PaymentCalculator from '@/components/PaymentCalculator';
 
 interface Debt {
+  id: string;
   category: string;
   amount: number;
-  riskScore: number;
+  creditorName: string;
+  certainty: 'known' | 'estimated' | 'unknown';
+  urgency: 'immediate' | 'medium' | 'low';
+  interest: number;
+  startDate: string;
+  paymentStatus: 'current' | 'delayed' | 'default' | 'enforcement';
+  riskScore?: number;
 }
 
 interface DiagnosisData {
@@ -252,6 +261,42 @@ export default function Profile() {
           </Card>
         </div>
 
+        {/* Debt Breakdown Visualization */}
+        {debts.length > 0 && (
+          <Card className="bg-slate-800 border-slate-700">
+            <CardHeader>
+              <CardTitle className="text-white text-lg flex items-center gap-2">
+                <TrendingDown className="w-5 h-5" />
+                התפלגות החובות
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {debts.map((debt, idx) => {
+                  const percentage = (debt.amount / diagnosis.totalDebt) * 100;
+                  return (
+                    <div key={idx} className="space-y-2">
+                      <div className="flex justify-between items-center">
+                        <span className="text-slate-300">{debt.category}</span>
+                        <div className="text-right">
+                          <span className="text-white font-bold">₪{debt.amount.toLocaleString()}</span>
+                          <span className="text-slate-400 text-sm ml-2">({percentage.toFixed(1)}%)</span>
+                        </div>
+                      </div>
+                      <div className="w-full bg-slate-700 rounded-full h-2">
+                        <div
+                          className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full"
+                          style={{ width: `${percentage}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Debts List */}
         {debts.length > 0 && (
           <Card className="bg-slate-800 border-slate-700">
@@ -278,6 +323,12 @@ export default function Profile() {
         )}
 
         {/* Sections */}
+        <DebtPrioritySection debts={debts} />
+        <PaymentCalculator
+          totalDebt={diagnosis.totalDebt}
+          monthlyIncome={diagnosis.monthlyIncome || 0}
+          monthlyExpenses={diagnosis.monthlyExpenses || 0}
+        />
         <PaymentPlanSection diagnosis={{
           totalDebt: diagnosis.totalDebt,
           monthlyIncome: diagnosis.monthlyIncome || 0,

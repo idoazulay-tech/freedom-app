@@ -1,3 +1,4 @@
+import React from 'react';
 import { useAuth } from '@/_core/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,6 +9,13 @@ import { useLocation } from 'wouter';
 export default function Home() {
   const { user, isAuthenticated } = useAuth();
   const [, setLocation] = useLocation();
+  const [hasDraft, setHasDraft] = React.useState(false);
+
+  React.useEffect(() => {
+    // בדוק אם יש טיוטה בעמוד הבית
+    const draft = localStorage.getItem('diagnosis_draft');
+    setHasDraft(!!draft);
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
@@ -39,9 +47,22 @@ export default function Home() {
           <div className="flex gap-4 justify-center">
             {isAuthenticated && user ? (
               <>
-                <Button asChild size="lg" className="bg-blue-600 hover:bg-blue-700">
-                  <a href="/diagnosis-professional">התחל אבחון חדש</a>
-                </Button>
+                {hasDraft ? (
+                  <>
+                    <Button asChild size="lg" className="bg-green-600 hover:bg-green-700">
+                      <a href="/diagnosis-professional">המשך את האבחון</a>
+                    </Button>
+                    <Button asChild size="lg" className="bg-blue-600 hover:bg-blue-700">
+                      <a href="/diagnosis-professional">התחל אבחון חדש</a>
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Button asChild size="lg" className="bg-blue-600 hover:bg-blue-700">
+                      <a href="/diagnosis-professional">התחל אבחון חדש</a>
+                    </Button>
+                  </>
+                )}
                 <Button asChild variant="outline" size="lg" className="border-slate-600 text-white hover:bg-slate-800">
                   <a href="/dashboard">לדשבורד שלי</a>
                 </Button>
