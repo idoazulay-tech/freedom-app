@@ -27,18 +27,22 @@ interface Task {
   estimatedHours: number;
 }
 
+const COMPLETED_TASKS_KEY = 'freedom_completed_tasks';
+
 export default function TasksSection({ diagnosis }: { diagnosis?: DiagnosisData }) {
   const [filterPriority, setFilterPriority] = useState<string | null>(null);
-  const [completedTasks, setCompletedTasks] = useState<Set<string>>(new Set());
+  const [completedTasks, setCompletedTasks] = useState<Set<string>>(() => {
+    try {
+      const saved = localStorage.getItem(COMPLETED_TASKS_KEY);
+      return saved ? new Set(JSON.parse(saved)) : new Set();
+    } catch {
+      return new Set();
+    }
+  });
   const [tasks, setTasks] = useState<Task[]>([]);
 
   // Fetch generated tasks from server (server generates based on stored diagnosis)
   const { data: generatedTasksData, isLoading: isPending } = (trpc.diagnosis as any).generateTasks.useQuery();
-  
-  // Generate tasks on mount - useQuery fetches automatically
-  useEffect(() => {
-    // Tasks will be fetched automatically by useQuery
-  }, []);
 
   // Mutation to complete a task
   const completeTaskMutation = ((trpc.diagnosis as any).completeTask?.useMutation?.() || { mutate: () => {} });
@@ -53,6 +57,15 @@ export default function TasksSection({ diagnosis }: { diagnosis?: DiagnosisData 
       setTasks(tasksWithDates);
     }
   }, [generatedTasksData]);
+
+  // Persist completedTasks to localStorage whenever it changes
+  useEffect(() => {
+    try {
+      localStorage.setItem(COMPLETED_TASKS_KEY, JSON.stringify([...completedTasks]));
+    } catch {
+      // ignore storage errors
+    }
+  }, [completedTasks]);
 
   const filteredTasks = filterPriority ? tasks.filter((t) => t.priority === filterPriority) : tasks;
   

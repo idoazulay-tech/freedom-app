@@ -45,10 +45,11 @@ export default function AdvancedScoringSection({ diagnosis }: { diagnosis: Diagn
 
     let creditorDiversityScore = 0;
     const creditorCount = diagnosis.creditorCount || 0;
-    if (creditorCount === 1) creditorDiversityScore = 8;
-    else if (creditorCount <= 3) creditorDiversityScore = 5;
-    else if (creditorCount <= 5) creditorDiversityScore = 3;
-    else creditorDiversityScore = 0;
+    // יותר נושים = יותר סיכון
+    if (creditorCount >= 6) creditorDiversityScore = 8;
+    else if (creditorCount >= 4) creditorDiversityScore = 5;
+    else if (creditorCount >= 2) creditorDiversityScore = 3;
+    else creditorDiversityScore = 0; // נושה אחד = סיכון נמוך
 
     let paymentHistoryScore = 0;
     if (diagnosis.hasEnforcement) paymentHistoryScore = 10;
@@ -124,42 +125,42 @@ export default function AdvancedScoringSection({ diagnosis }: { diagnosis: Diagn
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between">
             <span className="text-slate-300">ניקוד כולל:</span>
-            <span className="text-4xl font-bold text-white">{advancedScore.totalScore}/200</span>
+            <span className="text-4xl font-bold text-white">{advancedScore.totalScore}/110</span>
           </div>
 
           {/* Progress bar */}
           <div className="w-full bg-slate-700 rounded-full h-3">
             <div
               className={`h-3 rounded-full transition-all ${
-                advancedScore.totalScore > 150
+                advancedScore.totalScore > 80
                   ? 'bg-red-500'
-                  : advancedScore.totalScore > 100
+                  : advancedScore.totalScore > 55
                     ? 'bg-orange-500'
-                    : advancedScore.totalScore > 50
+                    : advancedScore.totalScore > 30
                       ? 'bg-yellow-500'
                       : 'bg-green-500'
               }`}
-              style={{ width: `${(advancedScore.totalScore / 200) * 100}%` }}
+              style={{ width: `${Math.min(100, (advancedScore.totalScore / 110) * 100)}%` }}
             />
           </div>
 
           <div className="text-center">
             <Badge
               className={`text-lg px-4 py-2 ${
-                advancedScore.totalScore > 150
+                advancedScore.totalScore > 80
                   ? 'bg-red-500/20 text-red-300 border-red-500/30'
-                  : advancedScore.totalScore > 100
+                  : advancedScore.totalScore > 55
                     ? 'bg-orange-500/20 text-orange-300 border-orange-500/30'
-                    : advancedScore.totalScore > 50
+                    : advancedScore.totalScore > 30
                       ? 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30'
                       : 'bg-green-500/20 text-green-300 border-green-500/30'
               }`}
             >
-              {advancedScore.totalScore > 150
+              {advancedScore.totalScore > 80
                 ? 'קריטי'
-                : advancedScore.totalScore > 100
+                : advancedScore.totalScore > 55
                   ? 'גבוה'
-                  : advancedScore.totalScore > 50
+                  : advancedScore.totalScore > 30
                     ? 'בינוני'
                     : 'נמוך'}
             </Badge>
@@ -204,7 +205,7 @@ export default function AdvancedScoringSection({ diagnosis }: { diagnosis: Diagn
           <CardTitle className="text-white">המלצות</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          {advancedScore.totalScore > 150 && (
+          {advancedScore.totalScore > 80 && (
             <div className="p-3 bg-red-500/20 border border-red-500/30 rounded-lg">
               <p className="text-red-300 font-semibold mb-1">🚨 סטטוס קריטי</p>
               <p className="text-red-200 text-sm">
@@ -213,7 +214,7 @@ export default function AdvancedScoringSection({ diagnosis }: { diagnosis: Diagn
             </div>
           )}
 
-          {advancedScore.totalScore > 100 && advancedScore.totalScore <= 150 && (
+          {advancedScore.totalScore > 55 && advancedScore.totalScore <= 80 && (
             <div className="p-3 bg-orange-500/20 border border-orange-500/30 rounded-lg">
               <p className="text-orange-300 font-semibold mb-1">⚠️ סיכון גבוה</p>
               <p className="text-orange-200 text-sm">
@@ -222,7 +223,7 @@ export default function AdvancedScoringSection({ diagnosis }: { diagnosis: Diagn
             </div>
           )}
 
-          {advancedScore.totalScore > 50 && advancedScore.totalScore <= 100 && (
+          {advancedScore.totalScore > 30 && advancedScore.totalScore <= 55 && (
             <div className="p-3 bg-yellow-500/20 border border-yellow-500/30 rounded-lg">
               <p className="text-yellow-300 font-semibold mb-1">⚡ סיכון בינוני</p>
               <p className="text-yellow-200 text-sm">
@@ -231,7 +232,7 @@ export default function AdvancedScoringSection({ diagnosis }: { diagnosis: Diagn
             </div>
           )}
 
-          {advancedScore.totalScore <= 50 && (
+          {advancedScore.totalScore <= 30 && (
             <div className="p-3 bg-green-500/20 border border-green-500/30 rounded-lg">
               <p className="text-green-300 font-semibold mb-1">✓ סיכון נמוך</p>
               <p className="text-green-200 text-sm">
@@ -240,7 +241,7 @@ export default function AdvancedScoringSection({ diagnosis }: { diagnosis: Diagn
             </div>
           )}
 
-          {advancedScore.factors.debtRatio.score > 30 && (
+          {advancedScore.factors.debtRatio.score > 20 && (
             <div className="p-3 bg-slate-700/50 border border-slate-600 rounded-lg">
               <p className="text-slate-300 text-sm">
                 • דחוף: הקטן את היחס חוב/הכנסה - שקול הגדלת הכנסה או הקטנת הוצאות

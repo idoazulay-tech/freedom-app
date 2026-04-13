@@ -2,7 +2,7 @@ import { router, protectedProcedure } from "../_core/trpc";
 import { z } from "zod";
 import { getDb } from "../db";
 import { diagnoses } from "../../drizzle/schema";
-import { eq } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 import { matchDebtorToProfessional } from "../ai/matching";
 import { notifyOwner } from "../_core/notification";
 
@@ -139,7 +139,7 @@ export const diagnosisRouter = router({
         .select()
         .from(diagnoses)
         .where(eq(diagnoses.userId, ctx.user.id))
-        .orderBy(diagnoses.createdAt)
+        .orderBy(desc(diagnoses.createdAt))
         .limit(1);
 
       return result[0] || null;
@@ -176,7 +176,7 @@ export const diagnosisRouter = router({
       .select()
       .from(diagnoses)
       .where(eq(diagnoses.userId, ctx.user.id))
-      .orderBy(diagnoses.createdAt)
+      .orderBy(desc(diagnoses.createdAt))
       .limit(1);
 
     if (!diagnosis.length) return [];
@@ -242,7 +242,7 @@ export const diagnosisRouter = router({
       .select()
       .from(diagnoses)
       .where(eq(diagnoses.userId, ctx.user.id))
-      .orderBy(diagnoses.createdAt)
+      .orderBy(desc(diagnoses.createdAt))
       .limit(1);
     if (!diagnosis.length) return null;
     const diag = diagnosis[0];
@@ -264,7 +264,7 @@ export const diagnosisRouter = router({
       .select()
       .from(diagnoses)
       .where(eq(diagnoses.userId, ctx.user.id))
-      .orderBy(diagnoses.createdAt)
+      .orderBy(desc(diagnoses.createdAt))
       .limit(1);
     if (!diagnosis.length) return null;
     const diag = diagnosis[0];
@@ -327,7 +327,7 @@ export const diagnosisRouter = router({
       .select()
       .from(diagnoses)
       .where(eq(diagnoses.userId, ctx.user.id))
-      .orderBy(diagnoses.createdAt)
+      .orderBy(desc(diagnoses.createdAt))
       .limit(1);
     
     if (!diagnosis.length) return [];

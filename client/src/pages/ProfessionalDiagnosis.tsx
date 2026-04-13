@@ -64,6 +64,7 @@ export default function ProfessionalDiagnosis() {
   const [editingDebtId, setEditingDebtId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [showDraftPrompt, setShowDraftPrompt] = useState(false);
   
   // Validation function
   const validateField = (field: string, value: any): string => {
@@ -360,8 +361,21 @@ export default function ProfessionalDiagnosis() {
     return () => clearTimeout(timer);
   }, [formData, step]);
 
-  // Load Draft on mount
+  // Load Draft on mount - show prompt first
   useEffect(() => {
+    const draft = localStorage.getItem('diagnosis_draft');
+    if (draft) {
+      try {
+        JSON.parse(draft); // validate JSON
+        setShowDraftPrompt(true);
+      } catch (error) {
+        console.error('Error loading draft:', error);
+        localStorage.removeItem('diagnosis_draft');
+      }
+    }
+  }, []);
+
+  const handleContinueDraft = () => {
     const draft = localStorage.getItem('diagnosis_draft');
     if (draft) {
       try {
@@ -369,10 +383,16 @@ export default function ProfessionalDiagnosis() {
         setFormData(draftData);
         setStep(draftStep);
       } catch (error) {
-        console.error('Error loading draft:', error);
+        console.error('Error restoring draft:', error);
       }
     }
-  }, []);
+    setShowDraftPrompt(false);
+  };
+
+  const handleStartFresh = () => {
+    localStorage.removeItem('diagnosis_draft');
+    setShowDraftPrompt(false);
+  };
 
   // Delete Draft
   const handleDeleteDraft = () => {
@@ -518,18 +538,19 @@ export default function ProfessionalDiagnosis() {
   };
 
   const getPersona = (risk: number): string => {
+    // Yossi = מתחיל (סיכון נמוך), Dana = מתקדם, Avi = משברי (קריטי)
     if (risk < 100) return 'Green';
-    if (risk < 180) return 'Avi';
+    if (risk < 180) return 'Yossi';
     if (risk < 280) return 'Dana';
-    return 'Yossi';
+    return 'Avi';
   };
 
   const getPersonaColor = (persona: string): string => {
     switch (persona) {
       case 'Green': return 'bg-green-600';
-      case 'Avi': return 'bg-blue-600';
+      case 'Yossi': return 'bg-blue-600';
       case 'Dana': return 'bg-yellow-600';
-      case 'Yossi': return 'bg-red-600';
+      case 'Avi': return 'bg-red-600';
       default: return 'bg-gray-600';
     }
   };
@@ -544,6 +565,30 @@ export default function ProfessionalDiagnosis() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 p-4">
       <div className="max-w-2xl mx-auto">
+
+        {/* Draft Restore Prompt */}
+        {showDraftPrompt && (
+          <div className="mb-6 bg-blue-900/40 border border-blue-500/40 rounded-lg p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div>
+              <p className="text-blue-200 font-semibold">נמצאה טיוטה שמורה</p>
+              <p className="text-blue-300 text-sm">יש לך אבחון שלא הסתיים. האם תרצה להמשיך מאיפה שעצרת?</p>
+            </div>
+            <div className="flex gap-2 shrink-0">
+              <button
+                onClick={handleContinueDraft}
+                className="bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-2 rounded"
+              >
+                המשך טיוטה
+              </button>
+              <button
+                onClick={handleStartFresh}
+                className="bg-slate-600 hover:bg-slate-500 text-white text-sm px-4 py-2 rounded"
+              >
+                התחל מחדש
+              </button>
+            </div>
+          </div>
+        )}
         {/* Progress bar */}
         <div className="mb-8">
           <div className="flex justify-between mb-2">

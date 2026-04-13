@@ -1,18 +1,17 @@
 import { useEffect, useState } from 'react';
+import { useLocation } from 'wouter';
 import DashboardLayout from '@/components/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { trpc } from '@/lib/trpc';
-import { AlertCircle, CheckCircle, Clock, Users, TrendingDown, FileText } from 'lucide-react';
+import { AlertCircle, CheckCircle, Clock, TrendingDown, FileText, Edit } from 'lucide-react';
+import PaymentCalculator from '@/components/PaymentCalculator';
 import PaymentPlanSection from '@/components/PaymentPlanSection';
 import ProfessionalsSection from '@/components/ProfessionalsSection';
 import AdvancedScoringSection from '@/components/AdvancedScoringSection';
 import TasksSection from '@/components/TasksSection';
-import DocumentsSection from '@/components/DocumentsSection';
-import NotificationsCenter from '@/components/NotificationsCenter';
 import DebtPrioritySection from '@/components/DebtPrioritySection';
-import PaymentCalculator from '@/components/PaymentCalculator';
 
 interface Debt {
   id: string;
@@ -45,9 +44,50 @@ interface DiagnosisData {
   updatedAt: Date | null;
 }
 
+const CATEGORY_LABELS: Record<string, string> = {
+  'credit_card': 'כרטיס אשראי',
+  'bank_loan': 'הלוואת בנק',
+  'personal_loan': 'הלוואה אישית',
+  'mortgage': 'משכנתא',
+  'tax': 'חוב מס',
+  'other': 'אחר',
+  'bank': 'בנק',
+  'credit_line': 'מסגרת אשראי',
+  'insurance_loan': 'הלוואת ביטוח',
+  'finance_company': 'חברת מימון',
+  'municipal': 'חוב עירוני',
+  'utility': 'ספק שירות',
+  'medical': 'חוב רפואי',
+  'national_insurance': 'ביטוח לאומי',
+  'collection_agency': 'חברת גבייה',
+};
+
+const translateCategory = (category: string): string =>
+  CATEGORY_LABELS[category] || category;
+
+const translatePaymentStatus = (status: string): string => {
+  switch (status) {
+    case 'current': return 'משלם בזמן';
+    case 'delayed': return 'בעיכוב';
+    case 'default': return 'חדל תשלום';
+    case 'enforcement': return 'הוצל"פ';
+    default: return status || '';
+  }
+};
+
+const translateUrgency = (urgency: string): string => {
+  switch (urgency) {
+    case 'immediate': return 'דחוף מיידי';
+    case 'medium': return 'דחיפות בינונית';
+    case 'low': return 'דחיפות נמוכה';
+    default: return urgency || '';
+  }
+};
+
 export default function Profile() {
   const [debts, setDebts] = useState<Debt[]>([]);
   const [actions, setActions] = useState<any[]>([]);
+  const [, navigate] = useLocation();
 
   const { data: diagnosis, isLoading } = trpc.diagnosis.getMine.useQuery();
 
@@ -68,12 +108,13 @@ export default function Profile() {
     }
   }, [diagnosis]);
 
-  // Map new persona labels to old risk level names for compatibility
+  // Map persona labels to risk levels:
+  // Yossi = מתחיל (נמוך), Dana = מתקדם (גבוה), Avi = משברי (קריטי)
   const mapPersonaToRiskLevel = (persona: string): string => {
     const normalized = persona?.toLowerCase();
-    if (normalized === 'yossi') return 'critical';
+    if (normalized === 'avi') return 'critical';
     if (normalized === 'dana') return 'high';
-    if (normalized === 'avi') return 'medium';
+    if (normalized === 'yossi') return 'medium';
     if (normalized === 'green') return 'low';
     return normalized || 'medium';
   };
@@ -111,11 +152,12 @@ export default function Profile() {
 
   const getRiskDescription = (level: string): string => {
     const normalized = level?.toLowerCase();
-    if (normalized === 'yossi') return 'סיכון קריטי - דחוף!';
+    // Yossi = מתחיל (נמוך/בינוני), Dana = מתקדם (גבוה), Avi = משברי (קריטי)
+    if (normalized === 'avi') return 'סיכון קריטי - דחוף!';
     if (normalized === 'dana') return 'סיכון גבוה - דרוש פעולה';
-    if (normalized === 'avi') return 'סיכון בינוני - יש זמן';
+    if (normalized === 'yossi') return 'סיכון בינוני - יש זמן';
     if (normalized === 'green') return 'סיכון נמוך - יציב';
-    
+
     // Fallback for old format
     switch (normalized) {
       case 'critical': return 'סיכון קריטי - דחוף!';
@@ -169,9 +211,20 @@ export default function Profile() {
     <DashboardLayout>
       <div className="space-y-8">
         {/* Header */}
-        <div>
-          <h1 className="text-3xl font-bold text-white mb-2">הפרופיל שלי</h1>
-          <p className="text-slate-400">סיכום מצב החוב והמלצות אישיות</p>
+        <div className="flex items-start justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-white mb-2">הפרופיל שלי</h1>
+            <p className="text-slate-400">סיכום מצב החוב והמלצות אישיות</p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate('/diagnosis-professional')}
+            className="flex items-center gap-2 border-slate-600 text-slate-300 hover:text-white hover:border-slate-400"
+          >
+            <Edit className="w-4 h-4" />
+            עדכן אבחון
+          </Button>
         </div>
 
         {/* Risk Level Card */}
@@ -277,7 +330,7 @@ export default function Profile() {
                   return (
                     <div key={idx} className="space-y-2">
                       <div className="flex justify-between items-center">
-                        <span className="text-slate-300">{debt.category}</span>
+                        <span className="text-slate-300">{translateCategory(debt.category)}</span>
                         <div className="text-right">
                           <span className="text-white font-bold">₪{debt.amount.toLocaleString()}</span>
                           <span className="text-slate-400 text-sm ml-2">({percentage.toFixed(1)}%)</span>
@@ -311,8 +364,13 @@ export default function Profile() {
                 {debts.map((debt, idx) => (
                   <div key={idx} className="bg-slate-700/50 p-3 rounded flex justify-between items-start">
                     <div>
-                      <p className="font-medium text-white">{debt.category}</p>
-                      <p className="text-slate-400 text-sm">סיכון: {debt.riskScore}/100</p>
+                      <p className="font-medium text-white">{translateCategory(debt.category)}</p>
+                      {debt.creditorName && (
+                        <p className="text-slate-300 text-sm">{debt.creditorName}</p>
+                      )}
+                      <p className="text-slate-400 text-sm">
+                        {translatePaymentStatus(debt.paymentStatus)} · {translateUrgency(debt.urgency)}
+                      </p>
                     </div>
                     <span className="text-white font-bold">₪{debt.amount.toLocaleString()}</span>
                   </div>
@@ -340,8 +398,13 @@ export default function Profile() {
         <AdvancedScoringSection diagnosis={diagnosis} />
         <ProfessionalsSection />
         <TasksSection diagnosis={diagnosis} />
-        <DocumentsSection />
-        <NotificationsCenter />
+
+        {/* Documents & Notifications - coming soon */}
+        <Card className="bg-slate-800/50 border-slate-700/50 border-dashed">
+          <CardContent className="py-6 text-center">
+            <p className="text-slate-500 text-sm">מסמכים והתראות יהיו זמינים בקרוב</p>
+          </CardContent>
+        </Card>
 
         {/* Last Updated */}
         <div className="text-center text-slate-400 text-sm">
