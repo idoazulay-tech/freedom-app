@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { useLocation } from 'wouter';
 import { toast } from 'sonner';
 import { ArrowRight, ArrowLeft, Trash2, Edit2, X, ChevronDown } from 'lucide-react';
@@ -129,6 +129,73 @@ export default function ProfessionalDiagnosis() {
     startDate: '',
     paymentStatus: 'current',
   });
+
+  const debtCategoryRef = useRef<HTMLSelectElement>(null);
+  const creditorSelectRef = useRef<HTMLSelectElement>(null);
+
+  // Monitor select changes using MutationObserver
+  useEffect(() => {
+    const selectElement = debtCategoryRef.current;
+    if (!selectElement) return;
+
+    const observer = new MutationObserver(() => {
+      const value = selectElement.value;
+      if (value !== currentDebt.category) {
+        console.log('Select changed via DOM observer:', value);
+        setCurrentDebt(prev => ({...prev, category: value, creditorName: ''}));
+      }
+    });
+
+    observer.observe(selectElement, {
+      attributes: true,
+      attributeFilter: ['value'],
+      subtree: false
+    });
+
+    return () => observer.disconnect();
+  }, [currentDebt.category]);
+
+  // Update creditor dropdown when category changes
+  useEffect(() => {
+    if (currentDebt.category && creditorSelectRef.current) {
+      creditorSelectRef.current.value = '';
+    }
+  }, [currentDebt.category]);
+
+  // Memoize handlers to prevent re-renders from breaking event listeners
+  const handleDebtCategoryChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = e.target.value;
+    console.log('Category changed to:', value);
+    setCurrentDebt(prev => ({...prev, category: value}));
+  }, []);
+
+  const handleDebtCreditorChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
+    setCurrentDebt(prev => ({...prev, creditorName: e.target.value}));
+  }, []);
+
+  const handleDebtAmountChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setCurrentDebt(prev => ({...prev, amount: parseInt(e.target.value) || 0}));
+  }, []);
+
+  const handleDebtInterestChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setCurrentDebt(prev => ({...prev, interest: parseFloat(e.target.value) || 0}));
+  }, []);
+
+  const handleDebtCertaintyChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
+    setCurrentDebt(prev => ({...prev, certainty: e.target.value as 'known' | 'estimated' | 'unknown'}));
+  }, []);
+
+  const handleDebtUrgencyChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
+    setCurrentDebt(prev => ({...prev, urgency: e.target.value as 'immediate' | 'medium' | 'low'}));
+  }, []);
+
+  const handleDebtStatusChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
+    setCurrentDebt(prev => ({...prev, paymentStatus: e.target.value as 'current' | 'delayed' | 'default' | 'enforcement'}));
+  }, []);
+
+  const handleDebtDateChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setCurrentDebt(prev => ({...prev, startDate: e.target.value}));
+  }, []);
 
   // Step handlers
   const handleNext = () => {
@@ -727,8 +794,13 @@ export default function ProfessionalDiagnosis() {
             <div>
               <label className="block text-slate-300 text-sm mb-2">סוג החוב <span className="text-red-500">*</span></label>
               <select
-                value={currentDebt.category || ''}
-                onChange={(e) => setCurrentDebt(prev => ({...prev, category: e.target.value}))}
+                ref={debtCategoryRef}
+                defaultValue={currentDebt.category || ''}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  console.log('Select changed to:', value);
+                  setCurrentDebt(prev => ({...prev, category: value}));
+                }}
                 className="w-full bg-slate-700 text-white p-3 rounded border border-slate-600 focus:border-blue-500 outline-none"
               >
                 <option value="">בחר סוג חוב...</option>
@@ -747,8 +819,9 @@ export default function ProfessionalDiagnosis() {
             <div>
               <label className="block text-slate-300 text-sm mb-2">שם נושה <span className="text-red-500">*</span></label>
               <select
+                ref={creditorSelectRef}
                 value={currentDebt.creditorName || ''}
-                onChange={(e) => setCurrentDebt(prev => ({...prev, creditorName: e.target.value}))}
+                onChange={handleDebtCreditorChange}
                 className="w-full bg-slate-700 text-white p-3 rounded border border-slate-600 focus:border-blue-500 outline-none"
               >
                 <option value="">בחר נושה...</option>
@@ -777,7 +850,7 @@ export default function ProfessionalDiagnosis() {
                 value={currentDebt.amount && (currentDebt.amount > 0) ? currentDebt.amount : ''}
                 onChange={(e) => {
                   const value = parseInt(e.target.value) || 0;
-                  setCurrentDebt(prev => ({...prev, amount: value}));
+                  handleDebtAmountChange(e as any);
                   const error = validateField('amount', value);
                   setErrors(prev => ({ ...prev, debtAmount: error }));
                 }}
@@ -800,7 +873,7 @@ export default function ProfessionalDiagnosis() {
                 max="100"
                 placeholder="לדוגמה: 8.5"
                 value={currentDebt.interest && (currentDebt.interest > 0) ? currentDebt.interest : ''}
-                onChange={(e) => setCurrentDebt(prev => ({...prev, interest: parseInt(e.target.value) || 0}))}
+                onChange={handleDebtInterestChange}
                 className="w-full bg-slate-700 text-white p-3 rounded border border-slate-600 focus:border-blue-500 outline-none"
               />
             </div>
@@ -813,7 +886,7 @@ export default function ProfessionalDiagnosis() {
               </label>
               <select
                 value={currentDebt.certainty || 'known'}
-                onChange={(e) => setCurrentDebt(prev => ({...prev, certainty: e.target.value as any}))}
+                onChange={handleDebtCertaintyChange}
                 className="w-full bg-slate-700 text-white p-3 rounded border border-slate-600 focus:border-blue-500 outline-none"
               >
                 <option value="known">ידוע - יש לי את כל המידע</option>
@@ -830,7 +903,7 @@ export default function ProfessionalDiagnosis() {
               </label>
               <select
                 value={currentDebt.urgency || 'medium'}
-                onChange={(e) => setCurrentDebt(prev => ({...prev, urgency: e.target.value as any}))}
+                onChange={handleDebtUrgencyChange}
                 className="w-full bg-slate-700 text-white p-3 rounded border border-slate-600 focus:border-blue-500 outline-none"
               >
                 <option value="immediate">עדכני - בחודש האחרון</option>
@@ -847,7 +920,7 @@ export default function ProfessionalDiagnosis() {
               </label>
               <select
                 value={currentDebt.paymentStatus || 'current'}
-                onChange={(e) => setCurrentDebt(prev => ({...prev, paymentStatus: e.target.value as any}))}
+                onChange={handleDebtStatusChange}
                 className="w-full bg-slate-700 text-white p-3 rounded border border-slate-600 focus:border-blue-500 outline-none"
               >
                 <option value="current">פעיל - אני משלם כרגע</option>
@@ -863,7 +936,7 @@ export default function ProfessionalDiagnosis() {
               <input
                 type="date"
                 value={currentDebt.startDate || ''}
-                onChange={(e) => setCurrentDebt(prev => ({...prev, startDate: e.target.value}))}
+                onChange={handleDebtDateChange}
                 className="w-full bg-slate-700 text-white p-3 rounded border border-slate-600 focus:border-blue-500 outline-none"
               />
             </div>
