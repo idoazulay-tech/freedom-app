@@ -1,0 +1,1232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reckon — UI Mockups</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131a;
+    --surface2: #1c1c28;
+    --border: #2a2a3d;
+    --accent: #7c6fff;
+    --accent2: #ff6b9d;
+    --accent3: #00d4aa;
+    --text: #f0f0ff;
+    --text2: #8888aa;
+    --text3: #555577;
+    --green: #00d4aa;
+    --yellow: #ffd166;
+    --red: #ff6b6b;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #05050a;
+    font-family: 'DM Sans', sans-serif;
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* NAV */
+  .nav {
+    display: flex;
+    gap: 8px;
+    padding: 24px 32px;
+    background: #05050a;
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .nav-btn {
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text2);
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    transition: all 0.2s;
+  }
+  .nav-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .nav-btn.active { background: var(--accent); border-color: var(--accent); color: white; }
+  .nav-logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 20px;
+    color: var(--text);
+    margin-right: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .nav-logo span { color: var(--accent); }
+
+  /* SCREENS */
+  .screen { display: none; padding: 40px 32px; max-width: 1200px; margin: 0 auto; }
+  .screen.active { display: block; }
+
+  /* SCREEN TITLE */
+  .screen-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text3);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 32px;
+  }
+
+  /* ===== LANDING PAGE ===== */
+  .landing-hero {
+    min-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .landing-glow {
+    position: absolute;
+    width: 600px;
+    height: 600px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(124,111,255,0.15) 0%, transparent 70%);
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+  }
+  .landing-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 16px;
+    border-radius: 100px;
+    border: 1px solid rgba(124,111,255,0.3);
+    background: rgba(124,111,255,0.08);
+    font-size: 12px;
+    color: var(--accent);
+    margin-bottom: 32px;
+    font-weight: 500;
+  }
+  .landing-badge::before { content: '●'; font-size: 8px; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+  .landing-h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(32px, 4vw, 56px);
+    font-weight: 700;
+    line-height: 1.2;
+    margin-bottom: 24px;
+    max-width: 680px;
+    letter-spacing: -0.5px;
+  }
+  .landing-h1 em {
+    font-style: normal;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .landing-sub {
+    font-size: 18px;
+    color: var(--text2);
+    max-width: 520px;
+    line-height: 1.6;
+    margin-bottom: 48px;
+    font-weight: 300;
+  }
+  .landing-cta {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .btn-primary {
+    padding: 16px 32px;
+    border-radius: 12px;
+    background: var(--accent);
+    color: white;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 500;
+    font-size: 16px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-primary:hover { background: #9080ff; transform: translateY(-2px); }
+  .btn-secondary {
+    padding: 16px 32px;
+    border-radius: 12px;
+    background: transparent;
+    color: var(--text2);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 500;
+    font-size: 16px;
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+  .landing-stats {
+    display: flex;
+    gap: 48px;
+    margin-top: 80px;
+    padding-top: 48px;
+    border-top: 1px solid var(--border);
+  }
+  .stat { text-align: center; }
+  .stat-num {
+    font-family: 'Syne', sans-serif;
+    font-size: 32px;
+    font-weight: 800;
+    color: var(--accent);
+  }
+  .stat-label { font-size: 13px; color: var(--text3); margin-top: 4px; }
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    margin-top: 80px;
+  }
+  .feature-card {
+    padding: 28px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    transition: border-color 0.2s;
+  }
+  .feature-card:hover { border-color: var(--accent); }
+  .feature-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    background: rgba(124,111,255,0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    margin-bottom: 16px;
+  }
+  .feature-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 17px; margin-bottom: 8px; }
+  .feature-desc { font-size: 14px; color: var(--text2); line-height: 1.6; }
+  .pricing-section { margin-top: 100px; }
+  .pricing-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 40px;
+    font-weight: 800;
+    text-align: center;
+    margin-bottom: 48px;
+  }
+  .pricing-cards {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+    max-width: 720px;
+    margin: 0 auto;
+  }
+  .pricing-card {
+    padding: 32px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    position: relative;
+    overflow: hidden;
+  }
+  .pricing-card.featured {
+    border-color: var(--accent);
+    background: linear-gradient(135deg, rgba(124,111,255,0.08), var(--surface));
+  }
+  .pricing-card.featured::before {
+    content: 'POPULAR';
+    position: absolute;
+    top: 16px;
+    right: -24px;
+    background: var(--accent);
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    padding: 4px 32px;
+    transform: rotate(45deg);
+  }
+  .pricing-type { font-size: 13px; color: var(--text3); font-weight: 500; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 12px; }
+  .pricing-price { font-family: 'Syne', sans-serif; font-size: 48px; font-weight: 800; color: var(--text); }
+  .pricing-price span { font-size: 18px; color: var(--text2); font-family: 'DM Sans'; font-weight: 300; }
+  .pricing-desc { font-size: 14px; color: var(--text2); margin: 12px 0 24px; line-height: 1.5; }
+  .pricing-features { list-style: none; display: flex; flex-direction: column; gap: 12px; }
+  .pricing-features li { font-size: 14px; color: var(--text2); display: flex; align-items: center; gap: 10px; }
+  .pricing-features li::before { content: '✓'; color: var(--green); font-weight: 700; }
+
+  /* ===== AUTH ===== */
+  .auth-wrap {
+    min-height: 90vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .auth-card {
+    width: 440px;
+    padding: 48px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+  }
+  .auth-logo {
+    font-family: 'Syne', sans-serif;
+    font-size: 28px;
+    font-weight: 800;
+    margin-bottom: 8px;
+  }
+  .auth-logo span { color: var(--accent); }
+  .auth-sub { font-size: 14px; color: var(--text2); margin-bottom: 36px; }
+  .form-group { margin-bottom: 20px; }
+  .form-label { font-size: 13px; color: var(--text2); font-weight: 500; margin-bottom: 8px; display: block; }
+  .form-input {
+    width: 100%;
+    padding: 14px 16px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    transition: border-color 0.2s;
+    outline: none;
+  }
+  .form-input:focus { border-color: var(--accent); }
+  .form-input::placeholder { color: var(--text3); }
+  .btn-full {
+    width: 100%;
+    padding: 14px;
+    border-radius: 10px;
+    background: var(--accent);
+    color: white;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 500;
+    font-size: 15px;
+    border: none;
+    cursor: pointer;
+    margin-top: 8px;
+  }
+  .auth-footer { text-align: center; margin-top: 24px; font-size: 13px; color: var(--text2); }
+  .auth-footer a { color: var(--accent); text-decoration: none; }
+  .divider { display: flex; align-items: center; gap: 16px; margin: 24px 0; }
+  .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+  .divider span { font-size: 12px; color: var(--text3); }
+
+  /* ===== DASHBOARD ===== */
+  .app-layout {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    min-height: 90vh;
+    gap: 0;
+  }
+  .sidebar {
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 24px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .sidebar-logo {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px;
+    font-weight: 800;
+    padding: 8px 12px;
+    margin-bottom: 20px;
+  }
+  .sidebar-logo span { color: var(--accent); }
+  .sidebar-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    font-size: 14px;
+    color: var(--text2);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .sidebar-item:hover { background: var(--surface2); color: var(--text); }
+  .sidebar-item.active { background: rgba(124,111,255,0.12); color: var(--accent); font-weight: 500; }
+  .sidebar-item .icon { font-size: 16px; width: 20px; text-align: center; }
+  .sidebar-bottom { margin-top: auto; padding-top: 16px; border-top: 1px solid var(--border); }
+  .main-content { padding: 32px; overflow-y: auto; }
+  .top-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 32px;
+  }
+  .top-bar h1 { font-family: 'Syne', sans-serif; font-size: 26px; font-weight: 800; }
+  .btn-add {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 500;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+  .stat-card {
+    padding: 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+  }
+  .stat-card-label { font-size: 12px; color: var(--text3); font-weight: 500; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+  .stat-card-num { font-family: 'Syne', sans-serif; font-size: 32px; font-weight: 800; }
+  .stat-card-num.green { color: var(--green); }
+  .stat-card-num.accent { color: var(--accent); }
+  .stat-card-num.yellow { color: var(--yellow); }
+  .kanban {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 16px;
+  }
+  .kanban-col {}
+  .kanban-col-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    padding: 0 4px;
+  }
+  .kanban-col-title { font-size: 13px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 1px; }
+  .kanban-count {
+    background: var(--surface2);
+    border-radius: 100px;
+    padding: 2px 8px;
+    font-size: 11px;
+    color: var(--text3);
+  }
+  .job-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .job-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+  .job-company { font-size: 12px; color: var(--text3); margin-bottom: 4px; }
+  .job-title { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; margin-bottom: 12px; line-height: 1.3; }
+  .job-score {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .score-badge {
+    font-size: 12px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 100px;
+  }
+  .score-badge.high { background: rgba(0,212,170,0.12); color: var(--green); }
+  .score-badge.mid { background: rgba(255,209,102,0.12); color: var(--yellow); }
+  .score-badge.low { background: rgba(255,107,107,0.12); color: var(--red); }
+  .job-date { font-size: 11px; color: var(--text3); }
+  .followup-badge {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 100px;
+    background: rgba(255,107,157,0.12);
+    color: var(--accent2);
+    margin-top: 8px;
+  }
+
+  /* ===== ADD JOB MODAL ===== */
+  .modal-overlay {
+    background: rgba(5,5,10,0.85);
+    backdrop-filter: blur(8px);
+    padding: 40px 32px;
+  }
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 40px;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+  .modal-title { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; margin-bottom: 8px; }
+  .modal-sub { font-size: 14px; color: var(--text2); margin-bottom: 28px; }
+  .tab-bar {
+    display: flex;
+    gap: 4px;
+    background: var(--surface2);
+    border-radius: 10px;
+    padding: 4px;
+    margin-bottom: 28px;
+  }
+  .tab {
+    flex: 1;
+    padding: 8px;
+    border-radius: 8px;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text2);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .tab.active { background: var(--accent); color: white; }
+  .upload-zone {
+    border: 2px dashed var(--border);
+    border-radius: 14px;
+    padding: 40px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.2s;
+  }
+  .upload-zone:hover { border-color: var(--accent); }
+  .upload-icon { font-size: 40px; margin-bottom: 12px; }
+  .upload-text { font-size: 14px; color: var(--text2); }
+  .upload-text strong { color: var(--accent); }
+
+  /* ===== JOB DETAIL ===== */
+  .detail-layout {
+    display: grid;
+    grid-template-columns: 1fr 400px;
+    gap: 24px;
+  }
+  .detail-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 28px;
+  }
+  .detail-company { font-size: 14px; color: var(--text3); margin-bottom: 4px; }
+  .detail-title { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; margin-bottom: 12px; }
+  .status-select {
+    padding: 8px 16px;
+    border-radius: 8px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .score-circle-wrap { text-align: center; margin-bottom: 28px; }
+  .score-circle {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: conic-gradient(var(--green) 0deg 252deg, var(--surface2) 252deg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 12px;
+    position: relative;
+  }
+  .score-circle::before {
+    content: '';
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    background: var(--surface);
+    position: absolute;
+  }
+  .score-circle-num {
+    font-family: 'Syne', sans-serif;
+    font-size: 32px;
+    font-weight: 800;
+    color: var(--green);
+    position: relative;
+    z-index: 1;
+  }
+  .score-label { font-size: 13px; color: var(--text2); }
+  .section-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .missing-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; }
+  .missing-tag {
+    padding: 6px 12px;
+    border-radius: 100px;
+    background: rgba(255,107,107,0.1);
+    border: 1px solid rgba(255,107,107,0.2);
+    font-size: 12px;
+    color: var(--red);
+    font-weight: 500;
+  }
+  .suggestion-list { list-style: none; display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; }
+  .suggestion-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 13px;
+    color: var(--text2);
+    line-height: 1.5;
+  }
+  .suggestion-item::before { content: '→'; color: var(--accent); flex-shrink: 0; margin-top: 1px; }
+  .email-box {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    font-size: 13px;
+    color: var(--text2);
+    line-height: 1.7;
+    margin-bottom: 12px;
+    position: relative;
+    max-height: 200px;
+    overflow: hidden;
+  }
+  .email-blur {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 80px;
+    background: linear-gradient(transparent, var(--surface2));
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding-bottom: 12px;
+  }
+  .unlock-btn {
+    padding: 6px 16px;
+    border-radius: 100px;
+    background: var(--accent);
+    color: white;
+    font-size: 12px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+  }
+  .btn-copy {
+    width: 100%;
+    padding: 12px;
+    border-radius: 10px;
+    background: transparent;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 500;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  /* ===== SETTINGS ===== */
+  .settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .settings-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px;
+  }
+  .settings-card-title { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; margin-bottom: 20px; }
+  .plan-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 100px;
+    background: rgba(124,111,255,0.12);
+    border: 1px solid rgba(124,111,255,0.3);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent);
+    margin-bottom: 16px;
+  }
+  .usage-bar-wrap { margin-bottom: 16px; }
+  .usage-label { display: flex; justify-content: space-between; font-size: 12px; color: var(--text3); margin-bottom: 6px; }
+  .usage-bar { height: 6px; background: var(--surface2); border-radius: 100px; overflow: hidden; }
+  .usage-fill { height: 100%; border-radius: 100px; background: var(--accent); }
+  .btn-cancel { padding: 10px 20px; border-radius: 8px; border: 1px solid rgba(255,107,107,0.3); background: rgba(255,107,107,0.06); color: var(--red); font-family: 'DM Sans'; font-size: 13px; cursor: pointer; margin-top: 16px; }
+  .resume-preview { background: var(--surface2); border-radius: 10px; padding: 16px; font-size: 12px; color: var(--text3); line-height: 1.7; margin-bottom: 16px; max-height: 120px; overflow: hidden; position: relative; }
+  .avatar { width: 48px; height: 48px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--accent2)); display: flex; align-items: center; justify-content: center; font-family: 'Syne', sans-serif; font-weight: 800; font-size: 18px; margin-bottom: 12px; }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-logo">R<span>.</span></div>
+  <button class="nav-btn active" onclick="show('landing')">🏠 Landing Page</button>
+  <button class="nav-btn" onclick="show('signup')">📝 Sign Up</button>
+  <button class="nav-btn" onclick="show('login')">🔑 Login</button>
+  <button class="nav-btn" onclick="show('dashboard')">📊 Dashboard</button>
+  <button class="nav-btn" onclick="show('addjob')">➕ Add Job</button>
+  <button class="nav-btn" onclick="show('jobdetail')">🔍 Job Detail</button>
+  <button class="nav-btn" onclick="show('settings')">⚙️ Settings</button>
+</nav>
+
+<!-- ===== LANDING ===== -->
+<div id="screen-landing" class="screen active">
+  <div class="landing-hero">
+    <div class="landing-glow"></div>
+    <div class="landing-badge">AI-Powered Job Search · Used by 2,400+ job seekers</div>
+    <h1 class="landing-h1">Stop guessing why you're not <em>getting interviews</em></h1>
+    <p class="landing-sub">Reckon reads every job posting, compares it to your resume, and tells you exactly what's missing — then writes the perfect email for you.</p>
+    <div class="landing-cta">
+      <button class="btn-primary">Start Free — No Credit Card</button>
+      <button class="btn-secondary">See How It Works →</button>
+    </div>
+    <div class="landing-stats">
+      <div class="stat"><div class="stat-num">78%</div><div class="stat-label">average match score improvement</div></div>
+      <div class="stat"><div class="stat-num">3x</div><div class="stat-label">more interview callbacks</div></div>
+      <div class="stat"><div class="stat-num">&lt;30s</div><div class="stat-label">to analyze any job posting</div></div>
+      <div class="stat"><div class="stat-num">$1</div><div class="stat-label">to get started (12 jobs)</div></div>
+    </div>
+  </div>
+
+  <div class="features-grid">
+    <div class="feature-card">
+      <div class="feature-icon">🔗</div>
+      <div class="feature-title">Paste Any Job URL</div>
+      <div class="feature-desc">Drop a link from LinkedIn, Indeed, or any company careers page. Reckon reads it instantly and extracts everything.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🧠</div>
+      <div class="feature-title">AI Match Analysis</div>
+      <div class="feature-desc">Get a precise match score plus a list of exactly what skills and experience are missing from your resume for that role.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">✉️</div>
+      <div class="feature-title">Perfect Opening Email</div>
+      <div class="feature-desc">One click generates a tailored email that speaks directly to what the company is looking for. Not a generic template.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📋</div>
+      <div class="feature-title">Track Everything</div>
+      <div class="feature-desc">Kanban-style board keeps all your applications organized. Know exactly where you stand with every company.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">⏰</div>
+      <div class="feature-title">Follow-up Reminders</div>
+      <div class="feature-desc">Applied 7 days ago with no response? Reckon nudges you to send a follow-up and even writes it for you.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📸</div>
+      <div class="feature-title">Screenshot → Analysis</div>
+      <div class="feature-desc">Can't get the URL? Upload a screenshot of any job posting and Reckon's vision AI reads it automatically.</div>
+    </div>
+  </div>
+
+  <div class="pricing-section">
+    <div class="pricing-title">Simple, honest pricing</div>
+    <div class="pricing-cards">
+      <div class="pricing-card">
+        <div class="pricing-type">Pay as you go</div>
+        <div class="pricing-price">$1 <span>/ 12 jobs</span></div>
+        <div class="pricing-desc">Only pay when you use it. Perfect for focused job searches.</div>
+        <ul class="pricing-features">
+          <li>3 free jobs to start</li>
+          <li>$1 per 12 jobs after</li>
+          <li>All AI features included</li>
+          <li>No subscription needed</li>
+        </ul>
+      </div>
+      <div class="pricing-card featured">
+        <div class="pricing-type">Monthly</div>
+        <div class="pricing-price">$19 <span>/ month</span></div>
+        <div class="pricing-desc">7-day free trial. Cancel anytime in one click.</div>
+        <ul class="pricing-features">
+          <li>Unlimited jobs & analyses</li>
+          <li>Email reminders</li>
+          <li>Priority AI processing</li>
+          <li>7-day free trial</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SIGNUP ===== -->
+<div id="screen-signup" class="screen">
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <div class="auth-logo">Reckon<span>.</span></div>
+      <div class="auth-sub">Start finding jobs smarter. Free to begin.</div>
+      <div class="form-group">
+        <label class="form-label">Full Name</label>
+        <input class="form-input" type="text" placeholder="Ido Azulay">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input class="form-input" type="email" placeholder="ido@example.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input class="form-input" type="password" placeholder="••••••••">
+      </div>
+      <button class="btn-full">Create Free Account</button>
+      <div class="divider"><span>or continue with</span></div>
+      <button class="btn-full" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);display:flex;align-items:center;justify-content:center;gap:10px;">
+        <span>G</span> Continue with Google
+      </button>
+      <div class="auth-footer">Already have an account? <a href="#">Sign in</a></div>
+      <div style="margin-top:20px;padding:12px;background:rgba(124,111,255,0.06);border:1px solid rgba(124,111,255,0.15);border-radius:10px;font-size:12px;color:var(--text2);text-align:center;">
+        🎁 First 3 job analyses are free. No credit card required.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== LOGIN ===== -->
+<div id="screen-login" class="screen">
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <div class="auth-logo">Reckon<span>.</span></div>
+      <div class="auth-sub">Welcome back. Your jobs are waiting.</div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input class="form-input" type="email" placeholder="ido@example.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input class="form-input" type="password" placeholder="••••••••">
+        <div style="text-align:right;margin-top:6px;"><a href="#" style="font-size:12px;color:var(--accent);text-decoration:none;">Forgot password?</a></div>
+      </div>
+      <button class="btn-full">Sign In</button>
+      <div class="divider"><span>or</span></div>
+      <button class="btn-full" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);display:flex;align-items:center;justify-content:center;gap:10px;">
+        <span>G</span> Continue with Google
+      </button>
+      <div class="auth-footer">Don't have an account? <a href="#">Start free</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== DASHBOARD ===== -->
+<div id="screen-dashboard" class="screen">
+  <div style="padding:0">
+  <div class="app-layout">
+    <div class="sidebar">
+      <div class="sidebar-logo">R<span>.</span></div>
+      <div class="sidebar-item active"><span class="icon">📊</span> Dashboard</div>
+      <div class="sidebar-item"><span class="icon">💼</span> All Jobs</div>
+      <div class="sidebar-item"><span class="icon">📄</span> My Resume</div>
+      <div class="sidebar-item"><span class="icon">⏰</span> Reminders</div>
+      <div class="sidebar-item"><span class="icon">📈</span> Analytics</div>
+      <div class="sidebar-bottom">
+        <div class="sidebar-item"><span class="icon">⚙️</span> Settings</div>
+        <div class="sidebar-item"><span class="icon">🚪</span> Sign Out</div>
+      </div>
+    </div>
+
+    <div class="main-content">
+      <div class="top-bar">
+        <div>
+          <div style="font-size:13px;color:var(--text3);margin-bottom:4px;">Good morning, Ido 👋</div>
+          <h1>Job Dashboard</h1>
+        </div>
+        <button class="btn-add">+ Add Job</button>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-card-label">Total Applied</div>
+          <div class="stat-card-num accent">24</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label">Interviews</div>
+          <div class="stat-card-num green">4</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label">Avg Match Score</div>
+          <div class="stat-card-num yellow">71%</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label">Offers</div>
+          <div class="stat-card-num green">1</div>
+        </div>
+      </div>
+
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+        <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:16px;">Applications Pipeline</div>
+        <div style="font-size:12px;color:var(--text3);">Drag to update status</div>
+      </div>
+
+      <div class="kanban">
+        <!-- Saved -->
+        <div class="kanban-col">
+          <div class="kanban-col-header">
+            <div class="kanban-col-title">Saved</div>
+            <div class="kanban-count">3</div>
+          </div>
+          <div class="job-card">
+            <div class="job-company">Stripe</div>
+            <div class="job-title">Senior Product Designer</div>
+            <div class="job-score">
+              <div class="score-badge mid">64%</div>
+              <div class="job-date">Today</div>
+            </div>
+          </div>
+          <div class="job-card">
+            <div class="job-company">Notion</div>
+            <div class="job-title">Frontend Engineer</div>
+            <div class="job-score">
+              <div class="score-badge high">82%</div>
+              <div class="job-date">Yesterday</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Applied -->
+        <div class="kanban-col">
+          <div class="kanban-col-header">
+            <div class="kanban-col-title">Applied</div>
+            <div class="kanban-count">8</div>
+          </div>
+          <div class="job-card">
+            <div class="job-company">Google</div>
+            <div class="job-title">UX Researcher</div>
+            <div class="job-score">
+              <div class="score-badge high">79%</div>
+              <div class="job-date">3 days ago</div>
+            </div>
+            <div class="followup-badge">⚡ Follow up now</div>
+          </div>
+          <div class="job-card">
+            <div class="job-company">Airbnb</div>
+            <div class="job-title">Product Manager</div>
+            <div class="job-score">
+              <div class="score-badge mid">58%</div>
+              <div class="job-date">5 days ago</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Interview -->
+        <div class="kanban-col">
+          <div class="kanban-col-header">
+            <div class="kanban-col-title">Interview</div>
+            <div class="kanban-count">4</div>
+          </div>
+          <div class="job-card" style="border-color:rgba(0,212,170,0.3)">
+            <div class="job-company">Figma</div>
+            <div class="job-title">Growth Lead</div>
+            <div class="job-score">
+              <div class="score-badge high">88%</div>
+              <div class="job-date">Week 2</div>
+            </div>
+          </div>
+          <div class="job-card" style="border-color:rgba(0,212,170,0.3)">
+            <div class="job-company">Linear</div>
+            <div class="job-title">Head of Design</div>
+            <div class="job-score">
+              <div class="score-badge high">91%</div>
+              <div class="job-date">Final round</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Rejected -->
+        <div class="kanban-col">
+          <div class="kanban-col-header">
+            <div class="kanban-col-title">Rejected</div>
+            <div class="kanban-count">6</div>
+          </div>
+          <div class="job-card" style="opacity:0.6">
+            <div class="job-company">Meta</div>
+            <div class="job-title">Product Designer</div>
+            <div class="job-score">
+              <div class="score-badge low">41%</div>
+              <div class="job-date">2 weeks ago</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Offer -->
+        <div class="kanban-col">
+          <div class="kanban-col-header">
+            <div class="kanban-col-title" style="color:var(--green);">Offer 🎉</div>
+            <div class="kanban-count">1</div>
+          </div>
+          <div class="job-card" style="border-color:rgba(0,212,170,0.4);background:rgba(0,212,170,0.04)">
+            <div class="job-company">Vercel</div>
+            <div class="job-title">Senior Designer</div>
+            <div class="job-score">
+              <div class="score-badge high">94%</div>
+              <div class="job-date">🎊 Accepted!</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  </div>
+</div>
+
+<!-- ===== ADD JOB ===== -->
+<div id="screen-addjob" class="screen">
+  <div class="modal-overlay">
+    <div class="modal">
+      <div class="modal-title">Add New Job</div>
+      <div class="modal-sub">How do you want to add this job posting?</div>
+      <div class="tab-bar">
+        <div class="tab active">🔗 Paste URL</div>
+        <div class="tab">📸 Screenshot</div>
+        <div class="tab">✏️ Manual</div>
+      </div>
+
+      <!-- URL Tab -->
+      <div class="form-group">
+        <label class="form-label">Job Posting URL</label>
+        <input class="form-input" type="url" placeholder="https://linkedin.com/jobs/view/...">
+        <div style="font-size:12px;color:var(--text3);margin-top:6px;">Works with LinkedIn, Indeed, Greenhouse, Workday, and any public URL</div>
+      </div>
+
+      <div style="background:var(--surface2);border-radius:12px;padding:16px;margin-bottom:20px;">
+        <div style="font-size:12px;color:var(--text3);margin-bottom:8px;font-weight:600;text-transform:uppercase;letter-spacing:1px;">Reckon will automatically extract:</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;">
+          <span style="font-size:12px;color:var(--accent);background:rgba(124,111,255,0.08);padding:4px 10px;border-radius:100px;">Company name</span>
+          <span style="font-size:12px;color:var(--accent);background:rgba(124,111,255,0.08);padding:4px 10px;border-radius:100px;">Job title</span>
+          <span style="font-size:12px;color:var(--accent);background:rgba(124,111,255,0.08);padding:4px 10px;border-radius:100px;">Requirements</span>
+          <span style="font-size:12px;color:var(--accent);background:rgba(124,111,255,0.08);padding:4px 10px;border-radius:100px;">Skills needed</span>
+          <span style="font-size:12px;color:var(--accent);background:rgba(124,111,255,0.08);padding:4px 10px;border-radius:100px;">Salary range</span>
+        </div>
+      </div>
+
+      <button class="btn-full">🧠 Analyze This Job</button>
+      <div style="text-align:center;font-size:12px;color:var(--text3);margin-top:12px;">AI analysis takes 5-15 seconds</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== JOB DETAIL ===== -->
+<div id="screen-jobdetail" class="screen">
+  <div class="app-layout">
+    <div class="sidebar">
+      <div class="sidebar-logo">R<span>.</span></div>
+      <div class="sidebar-item"><span class="icon">📊</span> Dashboard</div>
+      <div class="sidebar-item active"><span class="icon">💼</span> All Jobs</div>
+      <div class="sidebar-item"><span class="icon">📄</span> My Resume</div>
+      <div class="sidebar-item"><span class="icon">⏰</span> Reminders</div>
+      <div class="sidebar-bottom">
+        <div class="sidebar-item"><span class="icon">⚙️</span> Settings</div>
+      </div>
+    </div>
+
+    <div class="main-content">
+      <div style="margin-bottom:24px;">
+        <a href="#" style="font-size:13px;color:var(--text3);text-decoration:none;">← Back to Dashboard</a>
+      </div>
+
+      <div class="detail-layout">
+        <!-- Left: Job Info + Suggestions -->
+        <div>
+          <div class="detail-header">
+            <div>
+              <div class="detail-company">Google · Mountain View, CA · Remote-friendly</div>
+              <div class="detail-title">Senior UX Researcher</div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <span style="font-size:12px;color:var(--text2);background:var(--surface2);padding:4px 10px;border-radius:6px;">Full-time</span>
+                <span style="font-size:12px;color:var(--text2);background:var(--surface2);padding:4px 10px;border-radius:6px;">$140k–$190k</span>
+                <span style="font-size:12px;color:var(--text2);background:var(--surface2);padding:4px 10px;border-radius:6px;">Applied 3 days ago</span>
+              </div>
+            </div>
+            <select class="status-select">
+              <option>Applied</option>
+              <option>Interview</option>
+              <option>Offer</option>
+              <option>Rejected</option>
+            </select>
+          </div>
+
+          <div style="margin-bottom:28px;">
+            <div class="section-title">Missing from your resume</div>
+            <div class="missing-tags">
+              <div class="missing-tag">SQL proficiency</div>
+              <div class="missing-tag">Quant research methods</div>
+              <div class="missing-tag">5+ years experience</div>
+              <div class="missing-tag">Cross-functional leadership</div>
+            </div>
+          </div>
+
+          <div style="margin-bottom:28px;">
+            <div class="section-title">How to improve your chances</div>
+            <ul class="suggestion-list">
+              <li>Add a bullet about any data analysis or SQL work, even if self-taught or used in a personal project</li>
+              <li>Reframe your "user testing" experience as "mixed-methods research" — language Google specifically uses</li>
+              <li>Mention any cross-team collaboration where you influenced product decisions without direct authority</li>
+              <li>Include a specific metric for each case study (e.g. "reduced task completion time by 34%")</li>
+            </ul>
+          </div>
+
+          <div>
+            <div class="section-title">Job Requirements</div>
+            <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;font-size:13px;color:var(--text2);line-height:1.8;">
+              • 5+ years of UX research experience in a fast-paced environment<br>
+              • Proficiency in quantitative research methods and SQL<br>
+              • Experience with large-scale user research programs<br>
+              • Strong ability to synthesize findings into actionable insights<br>
+              • Experience leading research projects independently<br>
+              • BA/BS in Human-Computer Interaction, Psychology, or related field
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Score + Email -->
+        <div>
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px;margin-bottom:20px;">
+            <div class="score-circle-wrap">
+              <div class="score-circle">
+                <div class="score-circle-num">72%</div>
+              </div>
+              <div class="score-label">Match Score</div>
+              <div style="font-size:12px;color:var(--text3);margin-top:4px;">Good fit — with improvements</div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px;">
+              <div style="text-align:center;padding:12px;background:var(--surface2);border-radius:10px;">
+                <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:20px;color:var(--green);">8/12</div>
+                <div style="font-size:11px;color:var(--text3);margin-top:2px;">Skills matched</div>
+              </div>
+              <div style="text-align:center;padding:12px;background:var(--surface2);border-radius:10px;">
+                <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:20px;color:var(--red);">4</div>
+                <div style="font-size:11px;color:var(--text3);margin-top:2px;">Gaps found</div>
+              </div>
+            </div>
+          </div>
+
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px;">
+            <div class="section-title" style="margin-bottom:16px;">Your Opening Email</div>
+            <div class="email-box">
+              Subject: Senior UX Researcher — Ido Azulay<br><br>
+              Hi [Hiring Manager's name],<br><br>
+              I'm excited to apply for the Senior UX Researcher role at Google. With 4 years of mixed-methods research experience — spanning in-depth interviews, usability studies, and survey design — I've developed a strong foundation in translating complex user behavior into product decisions that matter...
+              <div class="email-blur">
+                <button class="unlock-btn">🔒 Upgrade to see full email</button>
+              </div>
+            </div>
+            <button class="btn-copy">📋 Copy Full Email</button>
+            <button style="width:100%;padding:10px;margin-top:8px;border-radius:10px;background:transparent;border:1px solid var(--border);color:var(--text3);font-family:'DM Sans';font-size:13px;cursor:pointer;margin-top:8px;">🔄 Regenerate Email (2 left)</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SETTINGS ===== -->
+<div id="screen-settings" class="screen">
+  <div class="app-layout">
+    <div class="sidebar">
+      <div class="sidebar-logo">R<span>.</span></div>
+      <div class="sidebar-item"><span class="icon">📊</span> Dashboard</div>
+      <div class="sidebar-item"><span class="icon">💼</span> All Jobs</div>
+      <div class="sidebar-item"><span class="icon">📄</span> My Resume</div>
+      <div class="sidebar-item"><span class="icon">⏰</span> Reminders</div>
+      <div class="sidebar-item active"><span class="icon">⚙️</span> Settings</div>
+    </div>
+
+    <div class="main-content">
+      <div class="top-bar">
+        <h1>Settings</h1>
+      </div>
+
+      <div class="settings-grid">
+        <!-- Profile -->
+        <div class="settings-card">
+          <div class="settings-card-title">Your Profile</div>
+          <div class="avatar">IA</div>
+          <div class="form-group">
+            <label class="form-label">Full Name</label>
+            <input class="form-input" type="text" value="Ido Azulay">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Email</label>
+            <input class="form-input" type="email" value="ido@example.com">
+          </div>
+          <button class="btn-full" style="margin-top:8px">Save Changes</button>
+        </div>
+
+        <!-- Billing -->
+        <div class="settings-card">
+          <div class="settings-card-title">Billing & Plan</div>
+          <div class="plan-badge">⚡ Monthly Plan — Active</div>
+          <div style="font-size:13px;color:var(--text2);margin-bottom:20px;">Next billing: June 22, 2026 · $19.00</div>
+
+          <div class="usage-bar-wrap">
+            <div class="usage-label"><span>Jobs analyzed this month</span><span>24 / unlimited</span></div>
+            <div class="usage-bar"><div class="usage-fill" style="width:60%"></div></div>
+          </div>
+          <div class="usage-bar-wrap">
+            <div class="usage-label"><span>AI emails generated</span><span>18 / unlimited</span></div>
+            <div class="usage-bar"><div class="usage-fill" style="width:45%;background:var(--accent2)"></div></div>
+          </div>
+
+          <div style="font-size:12px;color:var(--text3);margin-top:4px;">Trial ended · 7 days used · Subscribed since May 15</div>
+          <button class="btn-cancel">Cancel Subscription</button>
+        </div>
+
+        <!-- Resume -->
+        <div class="settings-card" style="grid-column:span 2">
+          <div class="settings-card-title">Your Resume</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+            <div>
+              <div style="font-size:13px;color:var(--text2);margin-bottom:12px;">Current resume used for all AI analyses</div>
+              <div class="resume-preview">
+                IDO AZULAY — Product Designer<br>
+                ido@example.com · Tel Aviv, Israel<br><br>
+                EXPERIENCE<br>
+                Senior Product Designer @ Startup X (2022–2024)<br>
+                • Led redesign of core product flow, improving retention by 23%<br>
+                • Conducted 40+ user interviews and usability tests<br>
+                • Collaborated with engineering teams across 3 time zones...
+              </div>
+              <div style="font-size:12px;color:var(--text3);">Last updated: May 10, 2026 · resume_v3.pdf</div>
+            </div>
+            <div>
+              <div style="font-size:13px;color:var(--text2);margin-bottom:12px;">Upload a new version or paste text directly</div>
+              <div class="upload-zone" style="padding:24px;">
+                <div class="upload-icon">📄</div>
+                <div class="upload-text">Drag PDF here or <strong>browse</strong></div>
+                <div style="font-size:11px;color:var(--text3);margin-top:8px;">PDF, DOCX · Max 5MB</div>
+              </div>
+              <div class="divider" style="margin:16px 0;"><span>or</span></div>
+              <textarea class="form-input" rows="4" placeholder="Paste resume text here..."></textarea>
+              <button class="btn-full" style="margin-top:12px;">Update Resume</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function show(screen) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('screen-' + screen).classList.add('active');
+  event.target.classList.add('active');
+}
+</script>
+</body>
+</html>
