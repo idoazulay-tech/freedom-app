@@ -1,0 +1,754 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: Reckon API specification
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: auth
+    description: Authentication operations
+  - name: profile
+    description: User profile operations
+  - name: jobs
+    description: Job management operations
+  - name: billing
+    description: Billing and subscription operations
+
+paths:
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Get authenticated user info
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: "#/components/schemas/UserSummary"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /profile:
+    get:
+      operationId: getProfile
+      tags: [profile]
+      summary: Get current user profile
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Profile data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProfileResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    put:
+      operationId: updateProfile
+      tags: [profile]
+      summary: Update user profile
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateProfileBody"
+      responses:
+        "200":
+          description: Updated profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProfileResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /profile/resume:
+    put:
+      operationId: uploadResume
+      tags: [profile]
+      summary: Upload or update resume
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                resume:
+                  type: string
+                  format: binary
+                resume_text:
+                  type: string
+      responses:
+        "200":
+          description: Resume uploaded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResumeUploadResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /jobs:
+    get:
+      operationId: getJobs
+      tags: [jobs]
+      summary: List all jobs for current user
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: List of jobs
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobsListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    post:
+      operationId: createJob
+      tags: [jobs]
+      summary: Create a new job
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateJobBody"
+      responses:
+        "201":
+          description: Job created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          description: Free tier limit reached
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /jobs/extract-url:
+    post:
+      operationId: extractJobFromUrl
+      tags: [jobs]
+      summary: Extract job details from a URL
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [url]
+              properties:
+                url:
+                  type: string
+                  format: uri
+      responses:
+        "200":
+          description: Extracted job data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExtractedJobResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "422":
+          description: Could not extract from URL
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /jobs/extract-image:
+    post:
+      operationId: extractJobFromImage
+      tags: [jobs]
+      summary: Extract job details from a screenshot
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [image]
+              properties:
+                image:
+                  type: string
+                  format: binary
+      responses:
+        "200":
+          description: Extracted job data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExtractedJobResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /jobs/{id}:
+    get:
+      operationId: getJob
+      tags: [jobs]
+      summary: Get a single job
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Job data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    put:
+      operationId: updateJob
+      tags: [jobs]
+      summary: Update a job
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateJobBody"
+      responses:
+        "200":
+          description: Updated job
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      operationId: deleteJob
+      tags: [jobs]
+      summary: Delete a job
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Job deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /jobs/{id}/analyze:
+    post:
+      operationId: analyzeJob
+      tags: [jobs]
+      summary: Run AI analysis on a job
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Analysis results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnalysisResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "429":
+          description: Rate limit reached
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /jobs/{id}/regenerate-email:
+    post:
+      operationId: regenerateEmail
+      tags: [jobs]
+      summary: Regenerate the opening email for a job
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Regenerated email
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RegenerateEmailResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "429":
+          description: Max regenerations reached
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /billing/status:
+    get:
+      operationId: getBillingStatus
+      tags: [billing]
+      summary: Get billing and usage status
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Billing status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BillingStatusResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /billing/cancel:
+    post:
+      operationId: cancelSubscription
+      tags: [billing]
+      summary: Cancel subscription
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Subscription cancelled
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  responses:
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+
+    UserSummary:
+      type: object
+      properties:
+        id:
+          type: string
+        full_name:
+          type: string
+          nullable: true
+        subscription_type:
+          type: string
+          enum: [free, payg, monthly]
+        jobs_count:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+      required:
+        - id
+        - subscription_type
+        - jobs_count
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        hint:
+          type: string
+      required:
+        - error
+
+    Profile:
+      type: object
+      properties:
+        id:
+          type: string
+        full_name:
+          type: string
+          nullable: true
+        resume_text:
+          type: string
+          nullable: true
+        resume_url:
+          type: string
+          nullable: true
+        subscription_type:
+          type: string
+          enum: [free, payg, monthly]
+        jobs_count:
+          type: integer
+        amount_owed:
+          type: number
+        created_at:
+          type: string
+        updated_at:
+          type: string
+          nullable: true
+      required:
+        - id
+        - subscription_type
+
+    ProfileResponse:
+      type: object
+      properties:
+        profile:
+          $ref: "#/components/schemas/Profile"
+      required:
+        - profile
+
+    UpdateProfileBody:
+      type: object
+      properties:
+        full_name:
+          type: string
+
+    ResumeUploadResponse:
+      type: object
+      properties:
+        profile:
+          $ref: "#/components/schemas/Profile"
+        resume_text:
+          type: string
+      required:
+        - profile
+
+    MissingSkill:
+      type: object
+      properties:
+        skill:
+          type: string
+        importance:
+          type: string
+          enum: [critical, important, nice_to_have]
+        reason:
+          type: string
+      required:
+        - skill
+        - importance
+
+    Job:
+      type: object
+      properties:
+        id:
+          type: string
+        user_id:
+          type: string
+        company_name:
+          type: string
+        job_title:
+          type: string
+        job_url:
+          type: string
+          nullable: true
+        job_description:
+          type: string
+        status:
+          type: string
+          enum: [saved, applied, interview, rejected, offer]
+        match_score:
+          type: integer
+          nullable: true
+        missing_skills:
+          type: array
+          nullable: true
+          items:
+            $ref: "#/components/schemas/MissingSkill"
+        resume_suggestions:
+          type: array
+          nullable: true
+          items:
+            type: string
+        generated_email:
+          type: string
+          nullable: true
+        market_report:
+          type: object
+          nullable: true
+          additionalProperties: true
+        email_generates_count:
+          type: integer
+        created_at:
+          type: string
+        updated_at:
+          type: string
+          nullable: true
+      required:
+        - id
+        - user_id
+        - company_name
+        - job_title
+        - status
+
+    JobResponse:
+      type: object
+      properties:
+        job:
+          $ref: "#/components/schemas/Job"
+      required:
+        - job
+
+    JobsListResponse:
+      type: object
+      properties:
+        jobs:
+          type: array
+          items:
+            $ref: "#/components/schemas/Job"
+      required:
+        - jobs
+
+    CreateJobBody:
+      type: object
+      properties:
+        company_name:
+          type: string
+        job_title:
+          type: string
+        job_url:
+          type: string
+          nullable: true
+        job_description:
+          type: string
+        status:
+          type: string
+          enum: [saved, applied, interview, rejected, offer]
+      required:
+        - company_name
+        - job_title
+
+    UpdateJobBody:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [saved, applied, interview, rejected, offer]
+        company_name:
+          type: string
+        job_title:
+          type: string
+        job_description:
+          type: string
+        job_url:
+          type: string
+          nullable: true
+        notes:
+          type: string
+
+    ExtractedJobData:
+      type: object
+      properties:
+        company_name:
+          type: string
+        job_title:
+          type: string
+        job_description:
+          type: string
+        requirements:
+          type: array
+          items:
+            type: string
+        salary_range:
+          type: string
+          nullable: true
+        location:
+          type: string
+          nullable: true
+
+    ExtractedJobResponse:
+      type: object
+      properties:
+        extracted:
+          $ref: "#/components/schemas/ExtractedJobData"
+      required:
+        - extracted
+
+    AnalysisResult:
+      type: object
+      properties:
+        match_score:
+          type: integer
+        skills_match:
+          type: integer
+        experience_match:
+          type: integer
+        education_match:
+          type: integer
+        missing_skills:
+          type: array
+          items:
+            $ref: "#/components/schemas/MissingSkill"
+        resume_suggestions:
+          type: array
+          items:
+            type: string
+        ats_risk_score:
+          type: integer
+        generated_email:
+          type: string
+          nullable: true
+        market_report:
+          type: object
+          nullable: true
+          additionalProperties: true
+
+    AnalysisResponse:
+      type: object
+      properties:
+        analysis:
+          $ref: "#/components/schemas/AnalysisResult"
+        is_partial:
+          type: boolean
+        upgrade_prompt:
+          type: string
+          nullable: true
+      required:
+        - analysis
+        - is_partial
+
+    RegenerateEmailResponse:
+      type: object
+      properties:
+        generated_email:
+          type: string
+        count:
+          type: integer
+      required:
+        - generated_email
+        - count
+
+    BillingStatusResponse:
+      type: object
+      properties:
+        subscription_type:
+          type: string
+          enum: [free, payg, monthly]
+        jobs_count:
+          type: integer
+        amount_owed:
+          type: number
+        today_ai_calls:
+          type: integer
+        today_jobs_analyzed:
+          type: integer
+        limits:
+          type: object
+          properties:
+            daily_ai_analyses:
+              type: integer
+            free_jobs:
+              type: integer
+            email_regenerations_per_job:
+              type: integer
+      required:
+        - subscription_type
+        - jobs_count
