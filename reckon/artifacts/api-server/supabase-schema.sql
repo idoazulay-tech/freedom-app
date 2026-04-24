@@ -1,5 +1,5 @@
 -- =========================================================
--- Purple Reckon — Supabase Database Schema v2.0
+-- Purple Reckon — Supabase Database Schema v2.1
 -- Run this in the Supabase SQL Editor for reckon-prod
 -- Safe to re-run: uses IF NOT EXISTS / IF NOT EXISTS guards
 -- =========================================================
@@ -18,14 +18,14 @@ create table if not exists public.profiles (
   emails_quota integer not null default 6,
   resume_quota integer not null default 3,
   amount_owed numeric(10,2) not null default 0,
-  lemon_squeezy_customer_id text,
-  lemon_squeezy_subscription_id text,
+  freemius_user_id text,
+  freemius_subscription_id text,
   trial_ends_at timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz
 );
 
--- Add missing columns to profiles if upgrading from v1
+-- Add missing columns to profiles if upgrading from v1/v2
 do $$ begin
   if not exists (select 1 from information_schema.columns where table_name='profiles' and column_name='emails_count') then
     alter table public.profiles add column emails_count integer not null default 0;
@@ -42,16 +42,25 @@ do $$ begin
   if not exists (select 1 from information_schema.columns where table_name='profiles' and column_name='resume_quota') then
     alter table public.profiles add column resume_quota integer not null default 3;
   end if;
-  if not exists (select 1 from information_schema.columns where table_name='profiles' and column_name='lemon_squeezy_customer_id') then
-    alter table public.profiles add column lemon_squeezy_customer_id text;
+  -- Freemius columns (replaces lemon_squeezy_*)
+  if not exists (select 1 from information_schema.columns where table_name='profiles' and column_name='freemius_user_id') then
+    alter table public.profiles add column freemius_user_id text;
   end if;
-  if not exists (select 1 from information_schema.columns where table_name='profiles' and column_name='lemon_squeezy_subscription_id') then
-    alter table public.profiles add column lemon_squeezy_subscription_id text;
+  if not exists (select 1 from information_schema.columns where table_name='profiles' and column_name='freemius_subscription_id') then
+    alter table public.profiles add column freemius_subscription_id text;
   end if;
   if not exists (select 1 from information_schema.columns where table_name='profiles' and column_name='trial_ends_at') then
     alter table public.profiles add column trial_ends_at timestamptz;
   end if;
 end $$;
+
+-- Helper: look up user UUID by email (used by Freemius webhook)
+create or replace function public.get_user_id_by_email(p_email text)
+returns uuid language sql security definer
+set search_path = public, auth
+as $$
+  select id from auth.users where email = p_email limit 1;
+$$;
 
 -- Auto-create profile on signup
 create or replace function public.handle_new_user()
