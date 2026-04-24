@@ -4,6 +4,7 @@ import authRouter from "./auth";
 import profileRouter from "./profile";
 import jobsRouter from "./jobs";
 import billingRouter from "./billing";
+import onboardingRouter from "./onboarding";
 
 const router: IRouter = Router();
 
@@ -12,5 +13,6 @@ router.use(authRouter);
 router.use(profileRouter);
 router.use(jobsRouter);
 router.use(billingRouter);
+router.use(onboardingRouter);
 
 export default router;

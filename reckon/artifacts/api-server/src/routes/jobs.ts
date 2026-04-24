@@ -2,14 +2,25 @@ import { Router, type IRouter } from "express";
 import multer from "multer";
 import { requireAuth } from "../middlewares/auth";
 import { supabase } from "../lib/supabase";
+import {
+  engine1ExtractFromText,
+  engine1ExtractFromImage,
+  engine2MarketIntel,
+  engine3ResumeMatch,
+  generateApplicationEmail,
+  tailorResume,
+  generateFollowupEmail,
+  detectDuplicate,
+  type ExtractionResult,
+} from "../engines";
 
 const router: IRouter = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
 
-const FREE_JOB_LIMIT = 3;
-const MAX_EMAIL_REGENERATIONS = 3;
+const MAX_EMAIL_REGEN = 3;
 const DAILY_AI_LIMIT = 10;
 
+// ── URL safety guard ──────────────────────────────────────
 function isSafeUrl(rawUrl: string): boolean {
   let parsed: URL;
   try {
@@ -17,40 +28,51 @@ function isSafeUrl(rawUrl: string): boolean {
   } catch {
     return false;
   }
-
   if (!["http:", "https:"].includes(parsed.protocol)) return false;
-
-  const hostname = parsed.hostname.toLowerCase();
-
+  const h = parsed.hostname.toLowerCase();
   const privatePatterns = [
-    /^localhost$/,
-    /^127\./,
-    /^10\./,
-    /^172\.(1[6-9]|2\d|3[01])\./,
-    /^192\.168\./,
-    /^169\.254\./,
-    /^::1$/,
-    /^fc00:/,
-    /^fd/,
-    /^0\.0\.0\.0$/,
-    /^metadata\.google\.internal$/,
-    /^169\.254\.169\.254$/,
+    /^localhost$/, /^127\./, /^10\./, /^172\.(1[6-9]|2\d|3[01])\./, /^192\.168\./,
+    /^169\.254\./, /^::1$/, /^fc00:/, /^fd/, /^0\.0\.0\.0$/,
+    /^metadata\.google\.internal$/, /^169\.254\.169\.254$/,
   ];
+  return !privatePatterns.some((p) => p.test(h));
+}
 
-  for (const pattern of privatePatterns) {
-    if (pattern.test(hostname)) return false;
-  }
+// ── Credit / quota helpers ────────────────────────────────
+interface Profile {
+  subscription_type: string;
+  jobs_quota: number;
+  emails_quota: number;
+  resume_quota: number;
+  jobs_count: number;
+  emails_count: number;
+  resume_credits_count: number;
+  trial_ends_at: string | null;
+}
 
+async function getProfile(userId: string): Promise<Profile | null> {
+  const { data } = await supabase
+    .from("profiles")
+    .select("subscription_type, jobs_quota, emails_quota, resume_quota, jobs_count, emails_count, resume_credits_count, trial_ends_at")
+    .eq("id", userId)
+    .single();
+  return data as Profile | null;
+}
+
+function isMonthly(profile: Profile): boolean {
+  if (profile.subscription_type !== "monthly") return false;
+  if (profile.trial_ends_at && new Date(profile.trial_ends_at) < new Date()) return false;
   return true;
 }
 
-async function getUserPlan(userId: string): Promise<string> {
-  const { data } = await supabase
-    .from("profiles")
-    .select("subscription_type")
-    .eq("id", userId)
-    .single();
-  return data?.subscription_type ?? "free";
+function upgradePayload() {
+  return {
+    error: "limit_reached",
+    options: {
+      payg: { label: "Add $1 — 4 more jobs + 8 emails", action: "upgrade_payg" },
+      monthly: { label: "♾️ $19/mo — Unlimited", action: "upgrade_monthly" },
+    },
+  };
 }
 
 async function getTodayAnalysisCount(userId: string): Promise<number> {
@@ -64,7 +86,7 @@ async function getTodayAnalysisCount(userId: string): Promise<number> {
   return data?.ai_calls ?? 0;
 }
 
-async function incrementAnalysisCount(userId: string): Promise<void> {
+async function incrementDailyAnalysis(userId: string): Promise<void> {
   const today = new Date().toISOString().slice(0, 10);
   const { data: existing } = await supabase
     .from("usage_tracking")
@@ -76,54 +98,158 @@ async function incrementAnalysisCount(userId: string): Promise<void> {
   if (existing) {
     await supabase
       .from("usage_tracking")
-      .update({
-        ai_calls: existing.ai_calls + 1,
-        jobs_analyzed: existing.jobs_analyzed + 1,
-      })
+      .update({ ai_calls: existing.ai_calls + 1, jobs_analyzed: existing.jobs_analyzed + 1 })
       .eq("id", existing.id);
   } else {
     await supabase.from("usage_tracking").insert({
-      user_id: userId,
-      period_start: today,
-      jobs_analyzed: 1,
-      ai_calls: 1,
-      amount_charged: 0,
+      user_id: userId, period_start: today, jobs_analyzed: 1, ai_calls: 1, amount_charged: 0,
     });
   }
 }
 
-router.get("/jobs", requireAuth, async (req, res) => {
-  const { data, error } = await supabase
-    .from("jobs")
-    .select("*")
-    .eq("user_id", req.user!.id)
-    .order("created_at", { ascending: false });
+// ── Helper: map Engine 1 result to DB insert fields ───────
+function extractionToJobFields(ex: ExtractionResult) {
+  return {
+    company_name: ex.job?.company_name ?? "",
+    job_title: ex.job?.title ?? "",
+    location: [ex.job?.location?.city, ex.job?.location?.region, ex.job?.location?.country].filter(Boolean).join(", ") || null,
+    remote_type: ex.job?.location?.remote_type ?? "unknown",
+    employment_type: ex.job?.employment_type ?? "unknown",
+    seniority: ex.job?.seniority ?? "unknown",
+    salary_min: ex.job?.salary?.min ?? null,
+    salary_max: ex.job?.salary?.max ?? null,
+    salary_currency: ex.job?.salary?.currency ?? null,
+    salary_raw: ex.job?.salary?.raw_text ?? null,
+    tech_stack: ex.skills?.tech_stack ?? [],
+    ats_keywords: ex.skills?.ats_keywords ?? [],
+    required_skills: ex.job?.required_qualifications ?? [],
+    preferred_skills: ex.job?.preferred_qualifications ?? [],
+    responsibilities: ex.job?.responsibilities ?? [],
+    benefits: ex.job?.benefits ?? [],
+    tone_style: ex.tone_and_culture?.tone_style ?? "unknown",
+    culture_signals: ex.tone_and_culture?.culture_signals ?? [],
+    language_style: ex.language_style ?? null,
+    extraction_data: ex as unknown as Record<string, unknown>,
+  };
+}
 
-  if (error) {
-    req.log.error({ error }, "Failed to fetch jobs");
-    res.status(500).json({ error: "Failed to fetch jobs" });
+// ─────────────────────────────────────────────────────────
+// POST /api/jobs/preview
+// Step 1: AI extraction — returns preview, NOT saved
+// ─────────────────────────────────────────────────────────
+router.post("/jobs/preview", requireAuth, async (req, res) => {
+  const body = req.body as { type?: string; url?: string; text?: string };
+
+  if (!body.type || !["url", "text"].includes(body.type)) {
+    res.status(400).json({ data: null, error: { code: "invalid_type", message: "type must be 'url' or 'text'" } });
     return;
   }
 
-  res.json({ jobs: data ?? [] });
-});
+  try {
+    let extraction: ExtractionResult;
 
-router.post("/jobs", requireAuth, async (req, res) => {
-  const plan = await getUserPlan(req.user!.id);
+    if (body.type === "url") {
+      if (!body.url || !isSafeUrl(body.url)) {
+        res.status(400).json({ data: null, error: { code: "url_fetch_failed", message: "Invalid or inaccessible URL. Try Screenshot instead." } });
+        return;
+      }
 
-  if (plan === "free") {
-    const { count } = await supabase
-      .from("jobs")
-      .select("id", { count: "exact", head: true })
-      .eq("user_id", req.user!.id);
+      const response = await fetch(body.url, {
+        headers: { "User-Agent": "Mozilla/5.0 (compatible; Reckon/1.0)" },
+        signal: AbortSignal.timeout(10_000),
+        redirect: "follow",
+      });
 
-    if ((count ?? 0) >= FREE_JOB_LIMIT) {
-      res.status(403).json({
-        error: "free_limit_reached",
-        message: "Free tier allows 3 jobs. Upgrade to add more.",
+      if (!response.ok) {
+        res.status(422).json({ data: null, error: { code: "url_fetch_failed", message: "We couldn't access this URL. Try Screenshot instead." } });
+        return;
+      }
+
+      const html = await response.text();
+      const text = html
+        .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "")
+        .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "")
+        .replace(/<[^>]+>/g, " ")
+        .replace(/\s+/g, " ")
+        .trim()
+        .slice(0, 8000);
+
+      extraction = await engine1ExtractFromText(text, body.url, "url");
+    } else {
+      if (!body.text || body.text.trim().length < 50) {
+        res.status(400).json({ data: null, error: { code: "low_quality_input", message: "Please paste the full job description." } });
+        return;
+      }
+      extraction = await engine1ExtractFromText(body.text, undefined, "text");
+    }
+
+    if (extraction.error) {
+      const errObj = JSON.parse(extraction.error) as { code: string; message: string };
+      res.status(422).json({ data: null, error: errObj });
+      return;
+    }
+
+    if (extraction.extraction_quality?.completeness_score < 0.5) {
+      res.status(422).json({
+        data: null,
+        error: { code: "extraction_incomplete", message: "We found partial info. Please review and fill in missing fields." },
       });
       return;
     }
+
+    res.json({ data: { extraction }, error: null });
+  } catch (err) {
+    req.log.error({ err }, "Preview extraction failed");
+    res.status(500).json({ data: null, error: { code: "internal_error", message: "Extraction failed. Please try again." } });
+  }
+});
+
+// ─────────────────────────────────────────────────────────
+// POST /api/jobs/extract-image
+// Image extraction via Engine 1
+// ─────────────────────────────────────────────────────────
+router.post("/jobs/extract-image", requireAuth, upload.single("image"), async (req, res) => {
+  const file = req.file;
+  if (!file) {
+    res.status(400).json({ data: null, error: { code: "missing_file", message: "image file is required" } });
+    return;
+  }
+
+  try {
+    const extraction = await engine1ExtractFromImage(file.buffer, file.mimetype);
+
+    if (extraction.error) {
+      const errObj = JSON.parse(extraction.error) as { code: string; message: string };
+      res.status(422).json({ data: null, error: errObj });
+      return;
+    }
+
+    res.json({ data: { extraction }, error: null });
+  } catch (err) {
+    req.log.error({ err }, "Image extraction failed");
+    res.status(500).json({ data: null, error: { code: "internal_error", message: "Image extraction failed." } });
+  }
+});
+
+// ─────────────────────────────────────────────────────────
+// POST /api/jobs
+// Step 2: Save confirmed job + trigger background analysis
+// ─────────────────────────────────────────────────────────
+router.post("/jobs", requireAuth, async (req, res) => {
+  const profile = await getProfile(req.user!.id);
+  if (!profile) {
+    res.status(500).json({ data: null, error: { code: "profile_not_found", message: "Profile not found." } });
+    return;
+  }
+
+  // Quota check
+  if (!isMonthly(profile) && profile.jobs_count >= profile.jobs_quota) {
+    res.status(402).json({
+      data: null,
+      ...upgradePayload(),
+      type: "jobs",
+    });
+    return;
   }
 
   const body = req.body as {
@@ -132,9 +258,50 @@ router.post("/jobs", requireAuth, async (req, res) => {
     job_url?: string;
     job_description?: string;
     status?: string;
+    location?: string;
+    remote_type?: string;
+    employment_type?: string;
+    seniority?: string;
+    salary_min?: number;
+    salary_max?: number;
+    salary_currency?: string;
+    tech_stack?: string[];
+    ats_keywords?: string[];
+    required_skills?: string[];
+    preferred_skills?: string[];
+    responsibilities?: string[];
+    benefits?: string[];
+    tone_style?: string;
+    culture_signals?: string[];
+    extraction_data?: Record<string, unknown>;
+    force?: boolean;
   };
 
-  const { data, error } = await supabase
+  // Duplicate check (before saving)
+  if (!body.force) {
+    const { data: existingJobs } = await supabase
+      .from("jobs")
+      .select("id, job_url, job_title, company_name, created_at")
+      .eq("user_id", req.user!.id);
+
+    const dup = detectDuplicate(
+      body.job_url ?? null,
+      body.job_title ?? "",
+      body.company_name ?? "",
+      existingJobs ?? []
+    );
+
+    if (dup.isDuplicate) {
+      res.status(409).json({
+        data: null,
+        error: { code: "duplicate_job", message: `You already added ${dup.existingJobTitle} at ${dup.existingJobCompany}` },
+        duplicate: dup,
+      });
+      return;
+    }
+  }
+
+  const { data: job, error } = await supabase
     .from("jobs")
     .insert({
       user_id: req.user!.id,
@@ -143,20 +310,156 @@ router.post("/jobs", requireAuth, async (req, res) => {
       job_url: body.job_url ?? null,
       job_description: body.job_description ?? "",
       status: body.status ?? "saved",
-      email_generates_count: 0,
+      location: body.location ?? null,
+      remote_type: body.remote_type ?? "unknown",
+      employment_type: body.employment_type ?? "unknown",
+      seniority: body.seniority ?? "unknown",
+      salary_min: body.salary_min ?? null,
+      salary_max: body.salary_max ?? null,
+      salary_currency: body.salary_currency ?? null,
+      tech_stack: body.tech_stack ?? [],
+      ats_keywords: body.ats_keywords ?? [],
+      required_skills: body.required_skills ?? [],
+      preferred_skills: body.preferred_skills ?? [],
+      responsibilities: body.responsibilities ?? [],
+      benefits: body.benefits ?? [],
+      tone_style: body.tone_style ?? "unknown",
+      culture_signals: body.culture_signals ?? [],
+      extraction_data: body.extraction_data ?? null,
+      analysis_status: "pending",
+      email_count: 0,
     })
     .select()
     .single();
 
   if (error) {
     req.log.error({ error }, "Failed to create job");
-    res.status(500).json({ error: "Failed to create job" });
+    res.status(500).json({ data: null, error: { code: "internal_error", message: "Failed to create job." } });
     return;
   }
 
-  res.status(201).json({ job: data });
+  // Trigger background analysis (non-blocking)
+  void runBackgroundAnalysis(req.user!.id, job.id, profile).catch((err) => {
+    req.log.error({ err, jobId: job.id }, "Background analysis failed");
+  });
+
+  res.status(201).json({ data: { job }, error: null });
 });
 
+// Background analysis: Engine 2 + Engine 3 in parallel
+async function runBackgroundAnalysis(userId: string, jobId: string, profile: Profile): Promise<void> {
+  // Check daily AI limit
+  const todayCount = await getTodayAnalysisCount(userId);
+  if (todayCount >= DAILY_AI_LIMIT) return;
+
+  // Mark as running
+  await supabase.from("jobs").update({ analysis_status: "running" }).eq("id", jobId);
+
+  const { data: job } = await supabase.from("jobs").select("*").eq("id", jobId).single();
+  if (!job) return;
+
+  const resumeText = await supabase
+    .from("profiles").select("resume_text").eq("id", userId).single()
+    .then(({ data }) => data?.resume_text ?? "");
+
+  // Engine 2 + Engine 3 in parallel
+  const [marketResult, matchResult] = await Promise.allSettled([
+    engine2MarketIntel(
+      job.job_title,
+      job.company_name,
+      job.location ?? "Remote",
+      job.seniority ?? "unknown",
+      jobId
+    ),
+    engine3ResumeMatch(
+      job.job_description,
+      resumeText,
+      job.job_title,
+      job.company_name
+    ),
+  ]);
+
+  const market = marketResult.status === "fulfilled" ? marketResult.value : null;
+  const match = matchResult.status === "fulfilled" ? matchResult.value : null;
+
+  // Generate email if Engine 3 succeeded and user has quota
+  let emailResult = null;
+  if (match && !match.error && (isMonthly(profile) || profile.emails_count < profile.emails_quota)) {
+    emailResult = await generateApplicationEmail(
+      job.job_title,
+      job.company_name,
+      job.job_description,
+      resumeText,
+      job.tone_style ?? "professional"
+    ).catch(() => null);
+  }
+
+  // Apply free-tier blurring
+  const isFree = !isMonthly(profile) && profile.subscription_type !== "payg";
+
+  await supabase.from("jobs").update({
+    analysis_status: "complete",
+    match_score: match?.overall?.score ?? null,
+    match_data: isFree ? blurMatchForFree(match) : match,
+    market_data: isFree ? null : market,
+    generated_email: isFree ? null : emailResult?.body ?? null,
+    email_subject: isFree ? null : emailResult?.subject ?? null,
+    email_count: emailResult ? 1 : 0,
+    analyzed_at: new Date().toISOString(),
+  }).eq("id", jobId);
+
+  if (emailResult && !isFree) {
+    await supabase.from("profiles")
+      .update({ emails_count: profile.emails_count + 1 })
+      .eq("id", userId);
+  }
+
+  await incrementDailyAnalysis(userId);
+}
+
+function blurMatchForFree(match: unknown): unknown {
+  if (!match || typeof match !== "object") return match;
+  const m = match as Record<string, unknown>;
+  return {
+    ...m,
+    overall: m.overall,
+    category_scores: m.category_scores,
+    gaps: Array.isArray(m.gaps) ? (m.gaps as unknown[]).slice(0, 2) : [],
+    resume_edits: null,
+    ats_analysis: null,
+    learning_recommendations: null,
+  };
+}
+
+// ─────────────────────────────────────────────────────────
+// GET /api/jobs
+// ─────────────────────────────────────────────────────────
+router.get("/jobs", requireAuth, async (req, res) => {
+  const { data, error } = await supabase
+    .from("jobs")
+    .select("id, company_name, job_title, job_url, location, remote_type, seniority, status, analysis_status, match_score, email_count, created_at, updated_at")
+    .eq("user_id", req.user!.id)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    res.status(500).json({ data: null, error: { code: "internal_error", message: "Failed to fetch jobs." } });
+    return;
+  }
+
+  // Add follow-up flag for applied jobs > 7 days without update
+  const now = new Date();
+  const jobs = (data ?? []).map((j) => {
+    const lastUpdate = new Date(j.updated_at ?? j.created_at);
+    const daysSince = (now.getTime() - lastUpdate.getTime()) / (1000 * 60 * 60 * 24);
+    return { ...j, needs_followup: j.status === "applied" && daysSince > 7 };
+  });
+
+  res.json({ data: { jobs }, error: null });
+});
+
+// ─────────────────────────────────────────────────────────
+// GET /api/jobs/:id
+// ─────────────────────────────────────────────────────────
 router.get("/jobs/:id", requireAuth, async (req, res) => {
   const { data, error } = await supabase
     .from("jobs")
@@ -166,20 +469,28 @@ router.get("/jobs/:id", requireAuth, async (req, res) => {
     .single();
 
   if (error || !data) {
-    res.status(404).json({ error: "Job not found" });
+    res.status(404).json({ data: null, error: { code: "not_found", message: "Job not found." } });
     return;
   }
 
-  res.json({ job: data });
+  res.json({ data: { job: data }, error: null });
 });
 
+// ─────────────────────────────────────────────────────────
+// PUT /api/jobs/:id
+// ─────────────────────────────────────────────────────────
 router.put("/jobs/:id", requireAuth, async (req, res) => {
-  const allowed = ["status", "company_name", "job_title", "job_description", "job_url", "notes"] as const;
+  const allowed = ["status", "notes", "company_name", "job_title", "job_description", "job_url", "location"] as const;
   const body = req.body as Record<string, unknown>;
-  const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
+  const updates: Record<string, unknown> = {};
 
   for (const key of allowed) {
     if (key in body) updates[key] = body[key];
+  }
+
+  if (Object.keys(updates).length === 0) {
+    res.status(400).json({ data: null, error: { code: "no_fields", message: "No valid fields to update." } });
+    return;
   }
 
   const { data, error } = await supabase
@@ -191,13 +502,16 @@ router.put("/jobs/:id", requireAuth, async (req, res) => {
     .single();
 
   if (error || !data) {
-    res.status(404).json({ error: "Job not found" });
+    res.status(404).json({ data: null, error: { code: "not_found", message: "Job not found." } });
     return;
   }
 
-  res.json({ job: data });
+  res.json({ data: { job: data }, error: null });
 });
 
+// ─────────────────────────────────────────────────────────
+// DELETE /api/jobs/:id
+// ─────────────────────────────────────────────────────────
 router.delete("/jobs/:id", requireAuth, async (req, res) => {
   const { data: existing } = await supabase
     .from("jobs")
@@ -207,7 +521,7 @@ router.delete("/jobs/:id", requireAuth, async (req, res) => {
     .single();
 
   if (!existing) {
-    res.status(404).json({ error: "Job not found" });
+    res.status(404).json({ data: null, error: { code: "not_found", message: "Job not found." } });
     return;
   }
 
@@ -218,149 +532,29 @@ router.delete("/jobs/:id", requireAuth, async (req, res) => {
     .eq("user_id", req.user!.id);
 
   if (error) {
-    res.status(500).json({ error: "Failed to delete job" });
+    res.status(500).json({ data: null, error: { code: "internal_error", message: "Failed to delete job." } });
     return;
   }
 
-  res.json({ message: "Job deleted successfully" });
+  res.json({ data: { message: "Job deleted." }, error: null });
 });
 
-router.post("/jobs/extract-url", requireAuth, async (req, res) => {
-  const { url } = req.body as { url?: string };
-  if (!url) {
-    res.status(400).json({ error: "url is required" });
-    return;
-  }
-
-  if (!isSafeUrl(url)) {
-    res.status(400).json({ error: "Invalid or disallowed URL" });
-    return;
-  }
-
-  try {
-    const response = await fetch(url, {
-      headers: { "User-Agent": "Mozilla/5.0 (compatible; Reckon/1.0)" },
-      signal: AbortSignal.timeout(10000),
-      redirect: "manual",
-    });
-
-    if (response.status >= 300 && response.status < 400) {
-      const location = response.headers.get("location");
-      if (!location || !isSafeUrl(location)) {
-        res.status(422).json({ error: "Redirect to disallowed destination", hint: "Try uploading a screenshot instead" });
-        return;
-      }
-      const redirected = await fetch(location, {
-        headers: { "User-Agent": "Mozilla/5.0 (compatible; Reckon/1.0)" },
-        signal: AbortSignal.timeout(10000),
-        redirect: "error",
-      });
-      if (!redirected.ok) {
-        res.status(422).json({ error: "Could not fetch job page", hint: "Try uploading a screenshot instead" });
-        return;
-      }
-      const html2 = await redirected.text();
-      const textContent2 = html2
-        .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "")
-        .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "")
-        .replace(/<[^>]+>/g, " ")
-        .replace(/\s+/g, " ")
-        .trim()
-        .slice(0, 8000);
-      const extracted2 = await extractJobFromText(textContent2, url);
-      res.json({ extracted: extracted2 });
-      return;
-    }
-
-    if (!response.ok) {
-      res.status(422).json({ error: "Could not fetch job page", hint: "Try uploading a screenshot instead" });
-      return;
-    }
-
-    const html = await response.text();
-    const textContent = html
-      .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "")
-      .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "")
-      .replace(/<[^>]+>/g, " ")
-      .replace(/\s+/g, " ")
-      .trim()
-      .slice(0, 8000);
-
-    const extracted = await extractJobFromText(textContent, url);
-    res.json({ extracted });
-  } catch (err) {
-    req.log.warn({ err }, "URL extraction failed");
-    res.status(422).json({ error: "Could not read that URL", hint: "Try uploading a screenshot instead" });
-  }
-});
-
-router.post("/jobs/extract-image", requireAuth, upload.single("image"), async (req, res) => {
-  const file = req.file;
-  if (!file) {
-    res.status(400).json({ error: "image file is required" });
-    return;
-  }
-
-  const extracted = await extractJobFromImage(file.buffer, file.mimetype);
-  res.json({ extracted });
-});
-
-router.post("/jobs/:id/analyze", requireAuth, async (req, res) => {
-  const plan = await getUserPlan(req.user!.id);
-  const analysisCount = await getTodayAnalysisCount(req.user!.id);
-
-  if (analysisCount >= DAILY_AI_LIMIT) {
-    res.status(429).json({ error: "Daily AI analysis limit reached. Try again tomorrow." });
-    return;
-  }
-
-  const { data: job, error: jobError } = await supabase
-    .from("jobs")
-    .select("*")
-    .eq("id", req.params["id"])
-    .eq("user_id", req.user!.id)
-    .single();
-
-  if (jobError || !job) {
-    res.status(404).json({ error: "Job not found" });
-    return;
-  }
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("resume_text")
-    .eq("id", req.user!.id)
-    .single();
-
-  const resumeText = profile?.resume_text ?? "";
-
-  const analysis = await generateJobAnalysis(job, resumeText, plan);
-
-  const isFree = plan === "free";
-  const storedAnalysis = isFree ? maskAnalysisForFree(analysis) : analysis;
-
-  await supabase
-    .from("jobs")
-    .update({
-      match_score: analysis.match_score,
-      missing_skills: isFree ? (analysis.missing_skills as unknown[])?.slice(0, 2) : analysis.missing_skills,
-      resume_suggestions: storedAnalysis.resume_suggestions,
-      generated_email: isFree ? null : analysis.generated_email,
-      market_report: isFree ? null : analysis.market_report,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", req.params["id"]);
-
-  await incrementAnalysisCount(req.user!.id);
-
-  res.json({
-    analysis: storedAnalysis,
-    is_partial: isFree,
-    upgrade_prompt: isFree ? "Upgrade to see the full email, all missing skills, and market report" : null,
-  });
-});
-
+// ─────────────────────────────────────────────────────────
+// POST /api/jobs/:id/regenerate-email
+// ─────────────────────────────────────────────────────────
 router.post("/jobs/:id/regenerate-email", requireAuth, async (req, res) => {
+  const profile = await getProfile(req.user!.id);
+  if (!profile) {
+    res.status(500).json({ data: null, error: { code: "internal_error", message: "Profile not found." } });
+    return;
+  }
+
+  // Email quota check
+  if (!isMonthly(profile) && profile.emails_count >= profile.emails_quota) {
+    res.status(402).json({ data: null, ...upgradePayload(), type: "emails" });
+    return;
+  }
+
   const { data: job, error: jobError } = await supabase
     .from("jobs")
     .select("*")
@@ -369,270 +563,115 @@ router.post("/jobs/:id/regenerate-email", requireAuth, async (req, res) => {
     .single();
 
   if (jobError || !job) {
-    res.status(404).json({ error: "Job not found" });
+    res.status(404).json({ data: null, error: { code: "not_found", message: "Job not found." } });
     return;
   }
 
-  if ((job.email_generates_count ?? 0) >= MAX_EMAIL_REGENERATIONS) {
-    res.status(429).json({ error: "Maximum email regenerations reached for this job (3)" });
+  const emailCount = job.email_count ?? job.email_generates_count ?? 0;
+  if (emailCount >= MAX_EMAIL_REGEN) {
+    res.status(429).json({ data: null, error: { code: "max_regenerations", message: "Maximum email regenerations reached for this job (3)." } });
     return;
   }
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("resume_text")
-    .eq("id", req.user!.id)
-    .single();
+  const { data: prof } = await supabase.from("profiles").select("resume_text").eq("id", req.user!.id).single();
 
-  const email = await generateEmail(job, profile?.resume_text ?? "");
+  const emailResult = await generateApplicationEmail(
+    job.job_title,
+    job.company_name,
+    job.job_description,
+    prof?.resume_text ?? "",
+    job.tone_style ?? "professional"
+  );
 
-  await supabase
-    .from("jobs")
-    .update({
-      generated_email: email,
-      email_generates_count: (job.email_generates_count ?? 0) + 1,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", req.params["id"]);
+  const newCount = emailCount + 1;
+  await supabase.from("jobs").update({
+    generated_email: emailResult.body,
+    email_subject: emailResult.subject,
+    email_count: newCount,
+    email_generates_count: newCount,
+  }).eq("id", req.params["id"]);
 
-  res.json({ generated_email: email, count: (job.email_generates_count ?? 0) + 1 });
+  await supabase.from("profiles")
+    .update({ emails_count: profile.emails_count + 1 })
+    .eq("id", req.user!.id);
+
+  res.json({ data: { email: emailResult, regenerations_used: newCount, regenerations_max: MAX_EMAIL_REGEN }, error: null });
 });
 
-async function extractJobFromText(text: string, url: string): Promise<Record<string, unknown>> {
-  const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return stubExtraction();
-
-  try {
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "claude-haiku-4-5",
-        max_tokens: 1024,
-        system: `You are a job listing parser. Extract structured data from job posting text and return ONLY valid JSON with these fields:
-{
-  "company_name": string,
-  "job_title": string,
-  "job_description": string,
-  "requirements": string[],
-  "salary_range": string | null,
-  "location": string | null
-}`,
-        messages: [{ role: "user", content: `Extract job data from this text:\n\nURL: ${url}\n\nContent:\n${text}` }],
-      }),
-    });
-
-    if (!response.ok) return stubExtraction();
-
-    const data = await response.json() as { content: Array<{ text: string }> };
-    const text2 = data.content?.[0]?.text ?? "{}";
-    const jsonMatch = text2.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) return stubExtraction();
-    return JSON.parse(jsonMatch[0]) as Record<string, unknown>;
-  } catch {
-    return stubExtraction();
+// ─────────────────────────────────────────────────────────
+// POST /api/jobs/:id/tailor-resume
+// ─────────────────────────────────────────────────────────
+router.post("/jobs/:id/tailor-resume", requireAuth, async (req, res) => {
+  const profile = await getProfile(req.user!.id);
+  if (!profile) {
+    res.status(500).json({ data: null, error: { code: "internal_error", message: "Profile not found." } });
+    return;
   }
-}
 
-async function extractJobFromImage(buffer: Buffer, mimetype: string): Promise<Record<string, unknown>> {
-  const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return stubExtraction();
-
-  try {
-    const base64 = buffer.toString("base64");
-    const mediaType = mimetype as "image/jpeg" | "image/png" | "image/gif" | "image/webp";
-
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "claude-haiku-4-5",
-        max_tokens: 1024,
-        system: `You are a job listing parser. Extract structured data from the job posting screenshot and return ONLY valid JSON with these fields:
-{
-  "company_name": string,
-  "job_title": string,
-  "job_description": string,
-  "requirements": string[],
-  "salary_range": string | null,
-  "location": string | null
-}`,
-        messages: [{
-          role: "user",
-          content: [
-            { type: "image", source: { type: "base64", media_type: mediaType, data: base64 } },
-            { type: "text", text: "Extract job data from this screenshot." },
-          ],
-        }],
-      }),
-    });
-
-    if (!response.ok) return stubExtraction();
-
-    const data = await response.json() as { content: Array<{ text: string }> };
-    const text = data.content?.[0]?.text ?? "{}";
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) return stubExtraction();
-    return JSON.parse(jsonMatch[0]) as Record<string, unknown>;
-  } catch {
-    return stubExtraction();
+  // Resume credit check
+  if (!isMonthly(profile) && profile.resume_credits_count >= profile.resume_quota) {
+    res.status(402).json({ data: null, ...upgradePayload(), type: "resume_credits" });
+    return;
   }
-}
 
-async function generateJobAnalysis(job: Record<string, unknown>, resumeText: string, plan: string): Promise<Record<string, unknown>> {
-  const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return stubAnalysis();
+  const { data: job, error: jobError } = await supabase
+    .from("jobs")
+    .select("*")
+    .eq("id", req.params["id"])
+    .eq("user_id", req.user!.id)
+    .single();
 
-  try {
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "claude-haiku-4-5",
-        max_tokens: 2048,
-        system: `You are Reckon, an AI job search assistant. Analyze how well a candidate's resume matches a job description. Return ONLY valid JSON with this exact structure:
-{
-  "match_score": number (0-100),
-  "skills_match": number (0-100),
-  "experience_match": number (0-100),
-  "education_match": number (0-100),
-  "missing_skills": [{"skill": string, "importance": "critical"|"important"|"nice_to_have", "reason": string}],
-  "resume_suggestions": [string],
-  "ats_risk_score": number (0-100),
-  "generated_email": string,
-  "market_report": {
-    "salary_position": string,
-    "competition_intensity": string,
-    "company_health": string,
-    "job_freshness": string,
-    "growth_potential": string,
-    "top_10_percent_path": string
+  if (jobError || !job) {
+    res.status(404).json({ data: null, error: { code: "not_found", message: "Job not found." } });
+    return;
   }
-}`,
-        messages: [{
-          role: "user",
-          content: `Job: ${job.job_title} at ${job.company_name}\n\nJob Description:\n${job.job_description}\n\nCandidate Resume:\n${resumeText || "No resume provided — use generic analysis"}`,
-        }],
-      }),
-    });
 
-    if (!response.ok) return stubAnalysis();
+  const { data: prof } = await supabase.from("profiles").select("resume_text").eq("id", req.user!.id).single();
+  const resumeText = prof?.resume_text ?? "";
 
-    const data = await response.json() as { content: Array<{ text: string }> };
-    const text = data.content?.[0]?.text ?? "{}";
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) return stubAnalysis();
-    return JSON.parse(jsonMatch[0]) as Record<string, unknown>;
-  } catch {
-    return stubAnalysis();
+  if (!resumeText || resumeText.trim().length < 50) {
+    res.status(400).json({ data: null, error: { code: "no_resume", message: "Please upload your resume before tailoring." } });
+    return;
   }
-}
 
-async function generateEmail(job: Record<string, unknown>, resumeText: string): Promise<string> {
-  const apiKey = process.env["ANTHROPIC_API_KEY"];
-  if (!apiKey) return stubEmail(String(job.job_title ?? ""), String(job.company_name ?? ""));
+  const tailorResult = await tailorResume(
+    resumeText,
+    job.job_title,
+    job.company_name,
+    job.job_description,
+    job.ats_keywords ?? []
+  );
 
-  try {
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "claude-haiku-4-5",
-        max_tokens: 1024,
-        system: "You are an expert job application coach. Write a compelling, personalized opening email for a job application. The email should be professional, specific to the company and role, and showcase the candidate's relevant strengths. Return ONLY the email text with no preamble.",
-        messages: [{
-          role: "user",
-          content: `Write an opening email for:\nPosition: ${job.job_title} at ${job.company_name}\nJob Description: ${job.job_description}\n\nCandidate Resume:\n${resumeText || "Experienced professional"}`,
-        }],
-      }),
-    });
+  // Deduct 1 resume credit
+  await supabase.from("profiles")
+    .update({ resume_credits_count: profile.resume_credits_count + 1 })
+    .eq("id", req.user!.id);
 
-    if (!response.ok) return stubEmail(String(job.job_title ?? ""), String(job.company_name ?? ""));
+  res.json({ data: { tailor: tailorResult, credits_used: profile.resume_credits_count + 1, credits_max: profile.resume_quota }, error: null });
+});
 
-    const data = await response.json() as { content: Array<{ text: string }> };
-    return data.content?.[0]?.text ?? stubEmail(String(job.job_title ?? ""), String(job.company_name ?? ""));
-  } catch {
-    return stubEmail(String(job.job_title ?? ""), String(job.company_name ?? ""));
+// ─────────────────────────────────────────────────────────
+// POST /api/jobs/:id/followup
+// ─────────────────────────────────────────────────────────
+router.post("/jobs/:id/followup", requireAuth, async (req, res) => {
+  const { data: job, error: jobError } = await supabase
+    .from("jobs")
+    .select("job_title, company_name, status, updated_at, created_at")
+    .eq("id", req.params["id"])
+    .eq("user_id", req.user!.id)
+    .single();
+
+  if (jobError || !job) {
+    res.status(404).json({ data: null, error: { code: "not_found", message: "Job not found." } });
+    return;
   }
-}
 
-function maskAnalysisForFree(analysis: Record<string, unknown>): Record<string, unknown> {
-  return {
-    ...analysis,
-    missing_skills: (analysis.missing_skills as unknown[])?.slice(0, 2) ?? [],
-    generated_email: null,
-    market_report: null,
-  };
-}
+  const lastUpdate = new Date(job.updated_at ?? job.created_at);
+  const daysElapsed = Math.floor((Date.now() - lastUpdate.getTime()) / (1000 * 60 * 60 * 24));
 
-function stubExtraction(): Record<string, unknown> {
-  return {
-    company_name: "",
-    job_title: "",
-    job_description: "",
-    requirements: [],
-    salary_range: null,
-    location: null,
-  };
-}
+  const followup = await generateFollowupEmail(job.job_title, job.company_name, daysElapsed);
 
-function stubAnalysis(): Record<string, unknown> {
-  return {
-    match_score: 72,
-    skills_match: 70,
-    experience_match: 75,
-    education_match: 80,
-    missing_skills: [
-      { skill: "TypeScript", importance: "critical", reason: "Listed as required in the job description" },
-      { skill: "React", importance: "critical", reason: "Primary frontend framework used" },
-      { skill: "GraphQL", importance: "important", reason: "Mentioned as preferred experience" },
-    ],
-    resume_suggestions: [
-      "Add quantifiable achievements to your work experience",
-      "Include relevant side projects or open source contributions",
-      "Tailor your summary to mention the specific technologies in this role",
-    ],
-    ats_risk_score: 65,
-    generated_email: stubEmail("the role", "the company"),
-    market_report: {
-      salary_position: "This role is competitive — average salary $95k-$130k for this level",
-      competition_intensity: "High — typically 200-500 applicants for this type of role",
-      company_health: "Growing company with recent Series B funding",
-      job_freshness: "Posted recently — act fast for best visibility",
-      growth_potential: "Strong — role leads to senior/lead positions",
-      top_10_percent_path: "Contribute to open source, showcase side projects, and prepare system design answers",
-    },
-  };
-}
-
-function stubEmail(title: string, company: string): string {
-  return `Dear Hiring Manager,
-
-I am writing to express my strong interest in the ${title} position at ${company}. Having reviewed the role carefully, I believe my background and skills align closely with what you're looking for.
-
-Throughout my career, I have developed deep expertise in building scalable systems and delivering results that move the needle. I am particularly drawn to ${company}'s mission and the opportunity to contribute meaningfully from day one.
-
-I would love the chance to discuss how my experience can benefit your team. I'm available for a call at your earliest convenience.
-
-Thank you for your consideration.
-
-Best regards`;
-}
+  res.json({ data: { followup, days_since_update: daysElapsed }, error: null });
+});
 
 export default router;
